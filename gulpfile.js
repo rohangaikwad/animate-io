@@ -44,7 +44,8 @@ gulp.task('compile-with-polyfill', (done) => {
         .pipe(terser())
         .pipe(rename({ suffix: '.min' }))
         .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/'));
+        .pipe(gulp.dest('dist/'))
+        .pipe(gulp.dest('docs/js'));
     done();
 })
 
@@ -59,7 +60,8 @@ gulp.task('style', (done) => {
         .pipe(rename('animate-io.min.css'))
         .pipe(gulp.dest('dist/'))
         .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/'));
+        .pipe(gulp.dest('dist/'))
+        .pipe(gulp.dest('docs/css'));
     done();
 });
 
