@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Animate IO</title>
+    <script src="dist/animate-io-polyfill.min.js"></script>
+    <link rel="stylesheet" href="dist/animate-io.min.css">
+    <style>
+        div {
+            margin-top: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 data-aio="fade-out-up" data-aio-delay="100" data-aio-repeat>Animate IO</h1>
+    <div data-aio="fade-in">Hello</div>
+
+    <script>
+        AnimateIO.init();
+
+        AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
+            intersection.in = () => {
+                console.log('in many');
+            }
+        });
+    </script>
+</body>
+
+</html>

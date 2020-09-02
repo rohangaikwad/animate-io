@@ -1,0 +1,40 @@
+{
+    "name": "animate-io",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "compile": "babel --presets @babel/env src -d dist",
+        "build": "gulp"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rohangaikwad/animate-io.git"
+    },
+    "author": "Rohan Gaikwad",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/rohangaikwad/animate-io/issues"
+    },
+    "homepage": "https://github.com/rohangaikwad/animate-io#readme",
+    "devDependencies": {
+        "@babel/cli": "^7.11.5",
+        "@babel/core": "^7.11.5",
+        "@babel/preset-env": "^7.11.5",
+        "autoprefixer": "^9.8.6",
+        "gulp": "^4.0.2",
+        "gulp-babel": "^8.0.0",
+        "gulp-cli": "^2.3.0",
+        "gulp-concat": "^2.6.1",
+        "gulp-postcss": "^8.0.0",
+        "gulp-rename": "^2.0.0",
+        "gulp-sass": "^4.1.0",
+        "gulp-sourcemaps": "^2.6.5",
+        "gulp-terser": "^1.4.0",
+        "gulp-uglify": "^3.0.2"
+    },
+    "browserslist": [
+        "defaults",
+        "IE 11"
+    ]
+}
