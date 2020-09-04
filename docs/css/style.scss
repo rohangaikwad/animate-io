@@ -2,7 +2,8 @@
 body { overflow-x: hidden; }
 
 h1 { height: 600px; display: flex; justify-content: center; align-items: center; background: yellow; }
-div.test { height: 400px; display: flex; justify-content: center; margin-top: 500px; }
+div.test { display: flex; justify-content: center;  }
+.sep { margin-bottom: 500px; }
 
 #aio-grid-container {
     position: absolute; z-index: 9999; pointer-events: none; top: 0; left: 0; right: 0;

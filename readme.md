@@ -6,18 +6,7 @@ What can it do
 
 - animate a number from 1 to n
 
-- animate like skrollable
 
-
-skrollr logic
-
-run every frame
-
-
-(function animationUpdate(){
-    render();
-    animFrame = requestAnimFrame(animationUpdate);
-}());
 
 
 stateMachine = [
@@ -32,14 +21,6 @@ stateMachine = [
         ]
     }
 ]
-
-a: fs
-b: color,
-c: fs
-
-0: "calc({?}px / {?})"
-1: 16
-2: 2
 
 
 //optimize when to call render
