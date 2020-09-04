@@ -15,12 +15,13 @@ gulp.task('compile', (done) => {
         //.pipe(sourcemaps.init())
         .pipe(rename("animate-io.js"))
         .pipe(gulp.dest('dist/'))
+        .pipe(gulp.dest('docs/js'))
         .pipe(terser())
         .pipe(rename({ suffix: '.min' }))
         //.pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/'))
-        .pipe(brotli.compress({ 'extension': 'br' }))
-        .pipe(gulp.dest('dist/'));
+        //.pipe(brotli.compress({ 'extension': 'br' }))
+        //.pipe(gulp.dest('dist/'));
     done();
 })
 
@@ -33,9 +34,9 @@ gulp.task('compile-es2015', (done) => {
         .pipe(terser())
         .pipe(rename({ suffix: '.min' }))
         //.pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/'))
-        .pipe(brotli.compress({ 'extension': 'br' }))
         .pipe(gulp.dest('dist/'));
+        //.pipe(brotli.compress({ 'extension': 'br' }))
+        //.pipe(gulp.dest('dist/'));
     done();
 })
 
@@ -50,13 +51,14 @@ gulp.task('compile-with-polyfill', (done) => {
         .pipe(rename({ suffix: '.min' }))
         //.pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/'))
-        .pipe(brotli.compress({ 'extension': 'br' }))
-        .pipe(gulp.dest('dist/'))
         .pipe(gulp.dest('docs/js'));
+        //.pipe(brotli.compress({ 'extension': 'br' }))
+        //.pipe(gulp.dest('dist/'))
+        //.pipe(gulp.dest('docs/js'));
     done();
 })
 
-gulp.task('style', (done) => {
+gulp.task('aio-style', (done) => {
     gulp.src(['src/styles.scss'])
         //.pipe(sourcemaps.init())
         .pipe(sass({ outputStyle: 'compact' }).on('error', sass.logError))
@@ -72,9 +74,22 @@ gulp.task('style', (done) => {
     done();
 });
 
+gulp.task('demo-style', (done) => {
+    gulp.src(['docs/css/style.scss'])
+        //.pipe(sourcemaps.init())
+        .pipe(sass({ outputStyle: 'compact' }).on('error', sass.logError))
+        .pipe(postcss([autoprefixer()]))
+        .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
+        .pipe(rename('style.min.css'))
+        .pipe(gulp.dest('docs/css//'));
+        //.pipe(sourcemaps.write('.'))
+    done();
+});
+
 gulp.task("default", () => {
     gulp.watch('src/main.js', gulp.parallel('compile'))
     gulp.watch('src/main.js', gulp.parallel('compile-es2015'))
     gulp.watch('src/main.js', gulp.parallel('compile-with-polyfill'))
-    gulp.watch('src/styles.scss', gulp.parallel('style'))
+    gulp.watch('src/styles.scss', gulp.parallel('aio-style'))
+    gulp.watch('docs/css/style.scss', gulp.parallel('demo-style'))
 });

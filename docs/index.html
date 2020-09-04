@@ -4,29 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Animate IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <meta name="author" content="Rohan Gaikwad">
     <script src="js/animate-io-polyfill.min.js"></script>
     <link rel="stylesheet" href="css/animate-io.min.css">
-    <style>
-        div {
-            margin-top: 100vh;
-        }
-    </style>
+    <link rel="stylesheet" id="style" data-href="css/style.min.css">
 </head>
 
 <body>
 
-    <h1 data-aio="fade-out-up" data-aio-delay="100" data-aio-repeat>Animate IO</h1>
-    <div data-aio="fade-in">Hello</div>
+    <h1 data-aio data-aio-100="font-size: calc(28px / 2); color: red;" data-aio-200="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
+    <div class="test" data-aio data-aio-800="font-size: 20px; transform: rotateZ(0deg)" data-aio-1000="font-size: 150px; transform: rotateZ(360deg)">Hello</div>
+    <div class="test" data-aio-200="font-size: 50px;">Hello1</div>
 
     <script>
-        AnimateIO.init();
 
-        AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
-            intersection.in = () => {
-                console.log('in many');
-            }
-        });
+        let s = document.querySelector("#style");
+        function updateStyle() {
+            s.setAttribute('href', `${s.getAttribute('data-href')}?v=${new Date().getTime()}`)
+        }
+        updateStyle();
+        setInterval(() => updateStyle(), 3000);
+
+
+        AnimateIO.init({mode: 'absolute', gridHelper: true});
+
+        // AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
+        //     intersection.in = () => {
+        //         console.log('in many');
+        //     }
+        // });
     </script>
 </body>
 
