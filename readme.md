@@ -28,3 +28,5 @@ stateMachine = [
 // minimum 2 keyframes
 
 https://polyfill.io/v3/url-builder/
+https://clontz.org/blog/2014/05/08/git-subtree-push-for-deployment/
+https://stackoverflow.com/questions/12644855/how-do-i-reset-a-heroku-git-repository-to-its-initial-state/13403588#13403588
