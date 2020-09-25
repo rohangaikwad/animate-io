@@ -6,21 +6,29 @@
     <title>Animate IO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <meta name="author" content="Rohan Gaikwad">
-    <script src="js/animate-io-polyfill.min.js"></script>
+    <script src="js/animate-io.js"></script>
     <link rel="stylesheet" href="css/animate-io.min.css">
     <link rel="stylesheet" id="style" href="css/style.min.css">
 </head>
 
 <body>
 
-    <h1 data-aio data-aio-100="font-size: calc(28px / 2); color: red;" data-aio-200="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
+    <div data-aiobserve data-aio-delay="0" data-aio-repeat class="main">
+        <div class="l1">1</div>
+        <div class="l2">2</div>
+        <div class="l3">3</div>
+    </div>
+    <div class="sep"></div>
+
+    <!-- <h1 data-aio data-aio-100="font-size: calc(28px / 2); color: red;" data-aio-200="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
     <div class="sep"></div>
     <div class="test" data-aio data-aio-800="font-size: 20px; transform: rotateZ(0deg)" data-aio-1000="font-size: 100px; transform: rotateZ(360deg)">Hello</div>
     <div class="sep"></div>
-    <div class="test" data-aio-200="font-size: 50px;">Hello1</div>
+    <div class="test" data-aio-200="font-size: 50px;">Hello1</div> -->
 
     <script>
-        AnimateIO.init({mode: 'absolute', gridHelper: true});
+        AnimateIO.init();
+        //AnimateIO.init({mode: 'absolute', gridHelper: true});
 
         // AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
         //     intersection.in = () => {
@@ -28,6 +36,7 @@
         //     }
         // });
     </script>
+    
 </body>
 
 </html>
