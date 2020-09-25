@@ -1,5 +1,6 @@
-import { GetAttrVal } from './Helpers';
-import { Render } from './Render';
+import { SMO_ID_ATTR_NAME } from './Constants';
+import { ForceRenderLoop } from './Render';
+import { AnimationSettings } from './Settings';
 
 export const StateMachine = {
     activeCount: 0,
@@ -8,12 +9,20 @@ export const StateMachine = {
 }
 
 export const InitAnimationStateMachine = () => {
-
     // filter out data-aio-<int> elements and push them to the StateMachine so that we can track them later
-    populateStateMachine();
+    populateStateMachine((count) => {
+        console.log(`${count} animateable elements found`);
+    });
+}
 
-    // attach an observer to all the elements added to the State Machine
-    // observeStateMachineObjects(fps);
+export const UpdateStateMachine = (callback = null) => {
+    populateStateMachine((count) => {
+        console.log(`${count} new animateable elements found`);
+        ObserveStateMachineObjects();
+
+        // Wait for observers to get attached to new elements
+        setTimeout(() => ForceRenderLoop(), 100);
+    });
 }
 
 // State Machine Object Template
@@ -22,37 +31,48 @@ const SMOTemplate = {
     domElement: null,
     ratio: 0,
     repeat: true,
-    keyframes: []
+    keyframes: [],
+    observerAttached: false
 }
 
-const populateStateMachine = () => {
-    let _elements = document.getElementsByTagName("*");
+let populateCounter = 0; // use this counter to generate unique ids for elements
 
-    [..._elements].forEach((elem, i) => {
+const populateStateMachine = (done) => {
+    let AllElements = document.getElementsByTagName("*");
+
+    // Filter elements with the signature: data-aio-<int>
+    // Example: data-aio-1000, data-aio-0
+    let AIOElements = [...AllElements].filter(elem => {
+        let attributes = Object.entries(elem.attributes).map(a => a[1])
+        return attributes.some(f => (/^data-aio--?[0-9]+/g).test(f.name));
+    });
+
+    // remove elements which have already been added & tracked inside animation state machien list
+    let _elements = AIOElements.filter(elem => !elem.hasAttribute(SMO_ID_ATTR_NAME));
+
+    _elements.forEach((elem, i) => {
         let { attributes } = elem;
 
-        // Match elements with the signature: data-aio-<int>
-        // Example: data-aio-1000, data-aio-0
-        let matched = Array.from(attributes).some(attr => (/^data-aio--?[0-9]+/g).test(attr.name));
-        if (matched) {
-            let keyframes = Array.from(attributes).filter(attr => (/^data-aio--?[0-9]+/g).test(attr.name));
+        let keyframes = Array.from(attributes).filter(attr => (/^data-aio--?[0-9]+/g).test(attr.name));
 
-            let id = `aio-pl-${i}`;
-            elem.setAttribute('data-aio-pl-id', id);
+        let id = `aio-pl-${++populateCounter}-${i}`;
+        elem.setAttribute(SMO_ID_ATTR_NAME, id);
 
-            let entry = { ...SMOTemplate };
-            entry.id = id;
-            entry.repeat = GetAttrVal(elem, 'data-aio-repeat', true);
-            entry.domElement = elem;
-            entry.keyframes = processKeyFrames(keyframes, elem);
+        let entry = { ...SMOTemplate };
+        entry.id = id;
+        entry.repeat = elem.hasAttribute('data-aio-repeat');
+        entry.domElement = elem;
+        entry.keyframes = processKeyFrames(keyframes, elem);
+        entry.observerAttached = false;
 
-            if (keyframes.length == 1) {
-                StateMachine.singleFrameElements.push(entry);
-            } else {
-                StateMachine.elements.push(entry);
-            }
+        if (keyframes.length == 1) {
+            StateMachine.singleFrameElements.push(entry);
+        } else {
+            StateMachine.elements.push(entry);
         }
     });
+    
+    done(_elements.length);
 }
 
 
@@ -93,7 +113,7 @@ const processKeyFrames = (kf, elem) => {
     });
 
     //convert offset to absolute
-    if (settings.mode == "relative") {
+    if (AnimationSettings.mode == "relative") {
         frames.forEach((f, i) => {
             let offset = elem.offsetTop + f.offset - window.innerHeight;
             f.absOffset = offset;
@@ -141,69 +161,70 @@ let _fillPropForFrame = function (frame, propList) {
     }
 }
 
+
+let AnimationObserver = null;
+export const InitiateAnimationObserver = () => {
+    let observerSettings = { root: document.documentElement, rootMargin: '0px', threshold: 0 }
+    // init observer
+    AnimationObserver = new IntersectionObserver((entries, observer) => {
+        //console.log(entries)
+        entries.forEach(entry => {
+            let elem = entry.target;
+            let aioPlId = elem.getAttribute(SMO_ID_ATTR_NAME);
+
+            let stateMachineObject = StateMachine.elements.filter(o => o.id == aioPlId)[0];
+
+            let intersected = false;
+            let ratio = entry.intersectionRatio;
+            stateMachineObject.ratio = ratio;
+            elem.setAttribute('data-ratio', ratio);
+
+            if (ratio > 0) {
+                intersected = true;
+                StateMachine.activeCount++;
+            }
+
+            if (ratio == 0 && intersected) {
+                StateMachine.activeCount--;
+
+                if (!stateMachineObject.repeat) {
+                    observer.unobserve(elem);
+
+                    let smoIndex = StateMachine.elements.findIndex(o => o.id == aioPlId);
+                    StateMachine.elements.splice(smoIndex, 1);
+                }
+            }
+        })
+    }, observerSettings);
+}
+
 export const ObserveStateMachineObjects = () => {
-    console.log(StateMachine);
     if (StateMachine.elements.length > 0) {
-
-        let observerSettings = { root: document, rootMargin: 0, threshold: 0 }
-        // init observer
-        let observer = new IntersectionObserver((entries, observerSettings) => {
-            //console.log(entries)
-            entries.forEach(entry => {
-                let elem = entry.target;
-                let aioPlId = elem.getAttribute('data-aio-pl-id');
-
-                let stateMachineObject = StateMachine.elements.filter(o => o.id == aioPlId)[0];
-
-                let intersected = false;
-                let ratio = entry.intersectionRatio;
-                stateMachineObject.ratio = ratio;
-                elem.setAttribute('data-ratio', ratio);
-
-                if (ratio > 0) {
-                    intersected = true;
-                    StateMachine.activeCount++;
-                }
-
-                if (ratio == 0 && intersected) {
-                    StateMachine.activeCount--;
-
-                    if (!stateMachineObject.repeat) {
-                        observer.unobserve(elem);
-
-                        let smoIndex = StateMachine.elements.findIndex(o => o.id == aioPlId);
-                        StateMachine.elements.splice(smoIndex, 1);
-                    }
-                }
-            })
+        let newStateMachineElements = StateMachine.elements.filter(elem => !elem.observerAttached);
+        newStateMachineElements.forEach(elem => {
+            AnimationObserver.observe(elem.domElement);
+            elem.observerAttached = true;
         });
-
-        StateMachine.elements.forEach(elem => {
-            observer.observe(elem.domElement);
-        });
-
-
-
-        // init render
-
-        let useFps = true;
-        if (fps != null) {
-            let num = parseFloat(fps);
-            useFps = !isNaN(num);
-        }
-
-        if (useFps) {
-            (function animationTimeoutUpdate() {
-                Render()
-                setTimeout(() => {
-                    requestAnimationFrame(animationTimeoutUpdate);
-                }, 1000 / fps);
-            }());
-        } else {
-            (function animationUpdate() {
-                Render()
-                requestAnimationFrame(animationUpdate);
-            }());
-        }
     }
 }
+
+export const StopAnimationObserver = () => {
+    AnimationObserver.disconnect();
+}
+
+const RemoveSMOAttributes = () => {
+    let StateMachineObjects = [...StateMachine.elements, ...StateMachine.singleFrameElements];
+
+    StateMachineObjects.forEach(smo => {
+        smo.domElement.removeAttribute(SMO_ID_ATTR_NAME);
+    })
+}
+
+export const ResetStateMachine = () => {
+    RemoveSMOAttributes();
+
+    StateMachine.activeCount = 0;
+    StateMachine.elements = [];
+    StateMachine.singleFrameElements = [];
+}
+

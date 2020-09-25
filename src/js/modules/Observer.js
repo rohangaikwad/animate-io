@@ -1,15 +1,43 @@
 import { ObserverSettings } from './Settings';
 import { AttrToNum, GetAttrVal } from './Helpers';
+import { AddMutationListener } from './Mutations';
 
-let elements = null;
 let ObserverList = [];
 
-export const ObserveAIOElements = () => {
 
-    elements = document.querySelectorAll(`[${ObserverSettings.observableAttrName}]`);
+export const InitAIObservers = () => {
+
+    // Scan for all AIO Elements & create observer for all of them
+    // Multiple observers so we can individually disconnect any element that we want
+    ObserveAIOElements();
+
+    
+    // look for new observable objects 
+    // start looking for new elements after an arbitrary delay of 2 seconds
+    if (ObserverSettings.trackMutations) {
+        setTimeout(() => AddNewAIOElements(), 2000);
+    }
+}
+
+const AddNewAIOElements = () => {
+    AddMutationListener({
+        name: 'observer_listener',
+        callback: (mutations) => {
+            // delay the observer so the animation can be visible a bit
+            setTimeout(() => ObserveAIOElements(), 10);
+        }
+    })
+}
+
+let helperCounter = 0;
+
+const ObserveAIOElements = () => {
+
+    let AIOElements = document.querySelectorAll(`[${ObserverSettings.observableAttrName}]`);
+    let elements = Array.from(AIOElements).filter(elem => !elem.hasAttribute('data-aio-id'));
 
     elements.forEach((elem, i) => {
-        elem.setAttribute('data-aio-id', `aio_auto_${i}`);
+        elem.setAttribute('data-aio-id', `aio_auto_${++helperCounter}_${i}`);
 
         let repeat = elem.hasAttribute('data-aio-repeat') || ObserverSettings.repeat;
         let delay = AttrToNum(elem, 'data-aio-delay', ObserverSettings.delay);
@@ -33,7 +61,7 @@ export const ObserveAIOElements = () => {
         }
 
         let intersectionsettings = {
-            root: ObserverSettings.root,
+            root: document.documentElement,
             rootMargin: rootMargin,
             threshold: ObserverSettings.threshold
         }
@@ -77,7 +105,7 @@ export const ObserveAIOElements = () => {
 
 const ObserveElements = (target, options, callback, repeat) => {
     let defaultOptions = {
-        root: document,
+        root: document.documentElement,
         rootMargin: 0,
         threshold: 0,
         ...options
@@ -131,7 +159,7 @@ export const KillAllObservers = () => {
 }
 
 export const ResetAnimateIO = () => {
-    killAllObservers();
+    KillAllObservers();
     let _elems = document.querySelectorAll(`[${ObserverSettings.observableAttrName}]`);
     _elems.forEach((elem, i) => {
         elem.classList.remove(Settings.enterIntersectionClassName);
@@ -144,7 +172,7 @@ export const ResetAnimateIO = () => {
 }
 
 export const DestroyAnimateIO = () => {
-    resetAnimateIO();
+    ResetAnimateIO();
     let _elems = document.querySelectorAll(`[${ObserverSettings.observableAttrName}]`);
     _elems.forEach((elem, i) => {
         let { attributes } = elem;
@@ -157,6 +185,6 @@ export const DestroyAnimateIO = () => {
 }
 
 export const RestartAnimateIO = () => {
-    resetAnimateIO();
-    main();
+    ResetAnimateIO();
+    ObserveAIOElements();
 }

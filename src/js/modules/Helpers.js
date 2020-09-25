@@ -29,3 +29,34 @@ export const DrawGrid = () => {
 
     document.body.appendChild(gridContainer);
 }
+
+
+export const QueryMedia = (mediaQuery, callback = null) => {
+    let query = window.matchMedia(mediaQuery);
+
+    if (callback == null) {
+        return query.matches;
+    } else {
+        callback({ matches: query.matches, remove: null });
+
+
+
+        let ObserveResult = (matches) => {
+            callback({
+                matches: matches,
+                // use removeListener to support legacy browsers like 11 
+                //remove: () => query.removeEventListener('change', handler)
+                remove: () => query.removeListener(handler) 
+            });
+        }
+
+        let handler = (e) => {
+            ObserveResult(e.matches)
+        }
+
+        // use addListener to support legacy browsers like 11
+        query.addListener(handler);
+        //query.addEventListener('change', handler);
+
+    }
+}

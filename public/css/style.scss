@@ -1,5 +1,5 @@
 * { box-sizing: border-box; }
-body { overflow-x: hidden; }
+body { overflow-x: hidden; min-height: 10000px; }
 
 h1 { height: 600px; display: flex; justify-content: center; align-items: center; background: yellow; }
 div.test { display: flex; justify-content: center;  }
@@ -25,4 +25,9 @@ div.test { display: flex; justify-content: center;  }
         .l2 { transition-delay: 0.5s; }
         .l3 { transition-delay: 1.0s; }
     }
+}
+
+.rohan {
+    display: flex; height: 100vh; justify-content: center; background-color: darkslategrey; color: #fff; transition: 0.3s;
+    &.aio-enter { font-size: 50px; }
 }

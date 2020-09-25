@@ -1,6 +1,6 @@
 import { OverrideDefaultObserverSettings, OverrideDefaultAnimationSettings } from './modules/Settings';
-import { ObserveAIOElements, ObserveElementsOnce, ObserveElementsContinuous, KillAllObservers, RestartAnimateIO, DestroyAnimateIO } from './modules/Observer';
-import { InitAnimations } from './modules/Animations';
+import { ObserveElementsOnce, ObserveElementsContinuous, KillAllObservers, RestartAnimateIO, DestroyAnimateIO, InitAIObservers } from './modules/Observer';
+import { InitAnimations, KillAnimateInstance, RestartAnimateInstance } from './modules/Animations';
 
 ((window) => {
     let InitObservers = (_settings) => {
@@ -9,7 +9,7 @@ import { InitAnimations } from './modules/Animations';
         OverrideDefaultObserverSettings(_settings);
 
         // scan for observable elements, attach intersection observer to each
-        ObserveAIOElements();
+        InitAIObservers();
     }
 
     let Animate = (_settings) => {
@@ -23,12 +23,13 @@ import { InitAnimations } from './modules/Animations';
 
     window.AnimateIO = {
         InitObservers: InitObservers,
+        Observe: ObserveElementsContinuous,
+        ObserveOnce: ObserveElementsOnce,
+        StopObservers: KillAllObservers,
+        DestroyObservers: DestroyAnimateIO,
+        RestartObservers: RestartAnimateIO,
         Animate: Animate,
-        observe: ObserveElementsContinuous,
-        observeOnce: ObserveElementsOnce,
-        stop: KillAllObservers,
-        reset: RestartAnimateIO,
-        restart: RestartAnimateIO,
-        destroy: DestroyAnimateIO
+        AnimateEnd: KillAnimateInstance,
+        AnimateRestart: RestartAnimateInstance
     };
 })(window);

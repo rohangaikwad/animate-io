@@ -12,7 +12,7 @@ var _Animations = require("./modules/Animations");
     // override settings passed from initialization
     (0, _Settings.OverrideDefaultObserverSettings)(_settings); // scan for observable elements, attach intersection observer to each
 
-    (0, _Observer.ObserveAIOElements)();
+    (0, _Observer.InitAIObservers)();
   };
 
   let Animate = _settings => {
@@ -24,27 +24,30 @@ var _Animations = require("./modules/Animations");
 
   window.AnimateIO = {
     InitObservers: InitObservers,
+    Observe: _Observer.ObserveElementsContinuous,
+    ObserveOnce: _Observer.ObserveElementsOnce,
+    StopObservers: _Observer.KillAllObservers,
+    DestroyObservers: _Observer.DestroyAnimateIO,
+    RestartObservers: _Observer.RestartAnimateIO,
     Animate: Animate,
-    observe: _Observer.ObserveElementsContinuous,
-    observeOnce: _Observer.ObserveElementsOnce,
-    stop: _Observer.KillAllObservers,
-    reset: _Observer.RestartAnimateIO,
-    restart: _Observer.RestartAnimateIO,
-    destroy: _Observer.DestroyAnimateIO
+    AnimateEnd: _Animations.KillAnimateInstance,
+    AnimateRestart: _Animations.RestartAnimateInstance
   };
 })(window);
 
-},{"./modules/Animations":3,"./modules/Observer":5,"./modules/Settings":7}],2:[function(require,module,exports){
+},{"./modules/Animations":3,"./modules/Observer":7,"./modules/Settings":9}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ObserveStateMachineObjects = exports.InitAnimationStateMachine = exports.StateMachine = void 0;
+exports.ResetStateMachine = exports.StopAnimationObserver = exports.ObserveStateMachineObjects = exports.InitiateAnimationObserver = exports.UpdateStateMachine = exports.InitAnimationStateMachine = exports.StateMachine = void 0;
 
-var _Helpers = require("./Helpers");
+var _Constants = require("./Constants");
 
 var _Render = require("./Render");
+
+var _Settings = require("./Settings");
 
 const StateMachine = {
   activeCount: 0,
@@ -55,49 +58,68 @@ exports.StateMachine = StateMachine;
 
 const InitAnimationStateMachine = () => {
   // filter out data-aio-<int> elements and push them to the StateMachine so that we can track them later
-  populateStateMachine(); // attach an observer to all the elements added to the State Machine
-  // observeStateMachineObjects(fps);
+  populateStateMachine(count => {
+    console.log(`${count} animateable elements found`);
+  });
+};
+
+exports.InitAnimationStateMachine = InitAnimationStateMachine;
+
+const UpdateStateMachine = (callback = null) => {
+  populateStateMachine(count => {
+    console.log(`${count} new animateable elements found`);
+    ObserveStateMachineObjects(); // Wait for observers to get attached to new elements
+
+    setTimeout(() => (0, _Render.ForceRenderLoop)(), 100);
+  });
 }; // State Machine Object Template
 
 
-exports.InitAnimationStateMachine = InitAnimationStateMachine;
+exports.UpdateStateMachine = UpdateStateMachine;
 const SMOTemplate = {
   id: '',
   domElement: null,
   ratio: 0,
   repeat: true,
-  keyframes: []
+  keyframes: [],
+  observerAttached: false
 };
+let populateCounter = 0; // use this counter to generate unique ids for elements
 
-const populateStateMachine = () => {
-  let _elements = document.getElementsByTagName("*");
+const populateStateMachine = done => {
+  let AllElements = document.getElementsByTagName("*"); // Filter elements with the signature: data-aio-<int>
+  // Example: data-aio-1000, data-aio-0
 
-  [..._elements].forEach((elem, i) => {
+  let AIOElements = [...AllElements].filter(elem => {
+    let attributes = Object.entries(elem.attributes).map(a => a[1]);
+    return attributes.some(f => /^data-aio--?[0-9]+/g.test(f.name));
+  }); // remove elements which have already been added & tracked inside animation state machien list
+
+  let _elements = AIOElements.filter(elem => !elem.hasAttribute(_Constants.SMO_ID_ATTR_NAME));
+
+  _elements.forEach((elem, i) => {
     let {
       attributes
-    } = elem; // Match elements with the signature: data-aio-<int>
-    // Example: data-aio-1000, data-aio-0
+    } = elem;
+    let keyframes = Array.from(attributes).filter(attr => /^data-aio--?[0-9]+/g.test(attr.name));
+    let id = `aio-pl-${++populateCounter}-${i}`;
+    elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
+    let entry = { ...SMOTemplate
+    };
+    entry.id = id;
+    entry.repeat = elem.hasAttribute('data-aio-repeat');
+    entry.domElement = elem;
+    entry.keyframes = processKeyFrames(keyframes, elem);
+    entry.observerAttached = false;
 
-    let matched = Array.from(attributes).some(attr => /^data-aio--?[0-9]+/g.test(attr.name));
-
-    if (matched) {
-      let keyframes = Array.from(attributes).filter(attr => /^data-aio--?[0-9]+/g.test(attr.name));
-      let id = `aio-pl-${i}`;
-      elem.setAttribute('data-aio-pl-id', id);
-      let entry = { ...SMOTemplate
-      };
-      entry.id = id;
-      entry.repeat = (0, _Helpers.GetAttrVal)(elem, 'data-aio-repeat', true);
-      entry.domElement = elem;
-      entry.keyframes = processKeyFrames(keyframes, elem);
-
-      if (keyframes.length == 1) {
-        StateMachine.singleFrameElements.push(entry);
-      } else {
-        StateMachine.elements.push(entry);
-      }
+    if (keyframes.length == 1) {
+      StateMachine.singleFrameElements.push(entry);
+    } else {
+      StateMachine.elements.push(entry);
     }
   });
+
+  done(_elements.length);
 };
 
 const processKeyFrames = (kf, elem) => {
@@ -132,7 +154,7 @@ const processKeyFrames = (kf, elem) => {
     elem.setAttribute(`data-kf-${i}`, _offset);
   }); //convert offset to absolute
 
-  if (settings.mode == "relative") {
+  if (_Settings.AnimationSettings.mode == "relative") {
     frames.forEach((f, i) => {
       let offset = elem.offsetTop + f.offset - window.innerHeight;
       f.absOffset = offset;
@@ -177,106 +199,207 @@ let _fillPropForFrame = function (frame, propList) {
   }
 };
 
-const ObserveStateMachineObjects = () => {
-  console.log(StateMachine);
+let AnimationObserver = null;
 
-  if (StateMachine.elements.length > 0) {
-    let observerSettings = {
-      root: document,
-      rootMargin: 0,
-      threshold: 0
-    }; // init observer
+const InitiateAnimationObserver = () => {
+  let observerSettings = {
+    root: document.documentElement,
+    rootMargin: '0px',
+    threshold: 0
+  }; // init observer
 
-    let observer = new IntersectionObserver((entries, observerSettings) => {
-      //console.log(entries)
-      entries.forEach(entry => {
-        let elem = entry.target;
-        let aioPlId = elem.getAttribute('data-aio-pl-id');
-        let stateMachineObject = StateMachine.elements.filter(o => o.id == aioPlId)[0];
-        let intersected = false;
-        let ratio = entry.intersectionRatio;
-        stateMachineObject.ratio = ratio;
-        elem.setAttribute('data-ratio', ratio);
+  AnimationObserver = new IntersectionObserver((entries, observer) => {
+    //console.log(entries)
+    entries.forEach(entry => {
+      let elem = entry.target;
+      let aioPlId = elem.getAttribute(_Constants.SMO_ID_ATTR_NAME);
+      let stateMachineObject = StateMachine.elements.filter(o => o.id == aioPlId)[0];
+      let intersected = false;
+      let ratio = entry.intersectionRatio;
+      stateMachineObject.ratio = ratio;
+      elem.setAttribute('data-ratio', ratio);
 
-        if (ratio > 0) {
-          intersected = true;
-          StateMachine.activeCount++;
+      if (ratio > 0) {
+        intersected = true;
+        StateMachine.activeCount++;
+      }
+
+      if (ratio == 0 && intersected) {
+        StateMachine.activeCount--;
+
+        if (!stateMachineObject.repeat) {
+          observer.unobserve(elem);
+          let smoIndex = StateMachine.elements.findIndex(o => o.id == aioPlId);
+          StateMachine.elements.splice(smoIndex, 1);
         }
-
-        if (ratio == 0 && intersected) {
-          StateMachine.activeCount--;
-
-          if (!stateMachineObject.repeat) {
-            observer.unobserve(elem);
-            let smoIndex = StateMachine.elements.findIndex(o => o.id == aioPlId);
-            StateMachine.elements.splice(smoIndex, 1);
-          }
-        }
-      });
+      }
     });
-    StateMachine.elements.forEach(elem => {
-      observer.observe(elem.domElement);
-    }); // init render
+  }, observerSettings);
+};
 
-    let useFps = true;
+exports.InitiateAnimationObserver = InitiateAnimationObserver;
 
-    if (fps != null) {
-      let num = parseFloat(fps);
-      useFps = !isNaN(num);
-    }
-
-    if (useFps) {
-      (function animationTimeoutUpdate() {
-        (0, _Render.Render)();
-        setTimeout(() => {
-          requestAnimationFrame(animationTimeoutUpdate);
-        }, 1000 / fps);
-      })();
-    } else {
-      (function animationUpdate() {
-        (0, _Render.Render)();
-        requestAnimationFrame(animationUpdate);
-      })();
-    }
+const ObserveStateMachineObjects = () => {
+  if (StateMachine.elements.length > 0) {
+    let newStateMachineElements = StateMachine.elements.filter(elem => !elem.observerAttached);
+    newStateMachineElements.forEach(elem => {
+      AnimationObserver.observe(elem.domElement);
+      elem.observerAttached = true;
+    });
   }
 };
 
 exports.ObserveStateMachineObjects = ObserveStateMachineObjects;
 
-},{"./Helpers":4,"./Render":6}],3:[function(require,module,exports){
+const StopAnimationObserver = () => {
+  AnimationObserver.disconnect();
+};
+
+exports.StopAnimationObserver = StopAnimationObserver;
+
+const RemoveSMOAttributes = () => {
+  let StateMachineObjects = [...StateMachine.elements, ...StateMachine.singleFrameElements];
+  StateMachineObjects.forEach(smo => {
+    smo.domElement.removeAttribute(_Constants.SMO_ID_ATTR_NAME);
+  });
+};
+
+const ResetStateMachine = () => {
+  RemoveSMOAttributes();
+  StateMachine.activeCount = 0;
+  StateMachine.elements = [];
+  StateMachine.singleFrameElements = [];
+};
+
+exports.ResetStateMachine = ResetStateMachine;
+
+},{"./Constants":4,"./Render":8,"./Settings":9}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.InitAnimations = void 0;
+exports.RestartAnimateInstance = exports.KillAnimateInstance = exports.InitAnimations = void 0;
 
 var _AnimationStateMachine = require("./AnimationStateMachine");
 
 var _Helpers = require("./Helpers");
 
+var _Mutations = require("./Mutations");
+
+var _Render = require("./Render");
+
 var _Settings = require("./Settings");
 
+let AnimationsInitialized = false;
+
 const InitAnimations = () => {
-  //scan for animateable elements, build the state machine
-  (0, _AnimationStateMachine.InitAnimationStateMachine)(); // init rendering for all the elements
+  if (AnimationsInitialized) {
+    console.error('AnimateIO.Animate() already initialized. To start a new instance, please stop the current animations instance using:\nAnimateIO.StopAnimations();');
+  } // Check if browser dimensions are correct
 
-  (0, _AnimationStateMachine.ObserveStateMachineObjects)();
 
-  if (_Settings.ObserverSettings.gridHelper) {
+  let canInitialize = (0, _Helpers.QueryMedia)(`(min-width: ${_Settings.AnimationSettings.deactivateBelow}px)`);
+
+  if (!canInitialize) {
+    console.log(`AnimateIO.Animate() can't initialize since the screen width is less than ${_Settings.AnimationSettings.deactivateBelow}`);
+    return;
+  } // Initiate animation observer
+
+
+  (0, _AnimationStateMachine.InitiateAnimationObserver)(); //scan for animateable elements, build the state machine
+
+  (0, _AnimationStateMachine.InitAnimationStateMachine)(); // attach an observer to all the elements added to the State Machine
+
+  (0, _AnimationStateMachine.ObserveStateMachineObjects)(); // init rendering for all the elements
+
+  (0, _Render.InitRenderer)(); // look for new animateable objects with the signature data-aio-<int>
+  // start looking for new elements after an arbitrary delay of 2 seconds
+
+  if (_Settings.AnimationSettings.trackMutations) {
+    setTimeout(() => AddNewElementsToStateMachine(), 2000);
+  } // show a helper grid and markers for where an animation will start and end
+
+
+  if (_Settings.AnimationSettings.gridHelper) {
     setTimeout(() => (0, _Helpers.DrawGrid)(), 1000);
   }
+
+  AnimationsInitialized = true; // Check for browser resolution changes    
+
+  WatchBrowserResize();
 };
 
 exports.InitAnimations = InitAnimations;
 
-},{"./AnimationStateMachine":2,"./Helpers":4,"./Settings":7}],4:[function(require,module,exports){
+const AddNewElementsToStateMachine = () => {
+  (0, _Mutations.AddMutationListener)({
+    name: 'animations_listener',
+    callback: mutations => {
+      (0, _AnimationStateMachine.UpdateStateMachine)();
+    }
+  });
+};
+
+const WatchBrowserResize = () => {
+  (0, _Helpers.QueryMedia)(`(min-width: ${_Settings.AnimationSettings.deactivateBelow}px)`, response => {
+    if (response.matches) {
+      // Start animations if not already initialized
+      if (!AnimationsInitialized) {
+        if (response.remove != null) {
+          response.remove();
+          console.log(`Restarting AnimateIO.Animate as browser width is >= ${_Settings.AnimationSettings.deactivateBelow}px`);
+          InitAnimations();
+        }
+      }
+    } else {
+      // stop the animations if browser window shrinks below defined width
+      if (AnimationsInitialized) {
+        console.log(`Stopping AnimateIO.Animate as browser width is < ${_Settings.AnimationSettings.deactivateBelow}px`);
+        KillAnimateInstance();
+      }
+    }
+  });
+};
+
+const KillAnimateInstance = () => {
+  // stop rendering
+  (0, _Render.StopRenderLoop)(); // Stop animation intersection observer
+
+  (0, _AnimationStateMachine.StopAnimationObserver)(); // disconnect mutation observer
+
+  (0, _Mutations.ResetMutationObserver)(); // reset state machine & remove state machine id attribute
+
+  (0, _AnimationStateMachine.ResetStateMachine)();
+  AnimationsInitialized = false;
+};
+
+exports.KillAnimateInstance = KillAnimateInstance;
+
+const RestartAnimateInstance = () => {
+  KillAnimateInstance();
+  InitAnimations();
+};
+
+exports.RestartAnimateInstance = RestartAnimateInstance;
+
+},{"./AnimationStateMachine":2,"./Helpers":5,"./Mutations":6,"./Render":8,"./Settings":9}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
+exports.SMO_ID_ATTR_NAME = void 0;
+const SMO_ID_ATTR_NAME = 'data-aio-smo-id';
+exports.SMO_ID_ATTR_NAME = SMO_ID_ATTR_NAME;
+
+},{}],5:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.QueryMedia = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
 
 const GetAttrVal = (elem, attr, defaultValue) => {
   let val = defaultValue;
@@ -319,25 +442,147 @@ const DrawGrid = () => {
 
 exports.DrawGrid = DrawGrid;
 
-},{}],5:[function(require,module,exports){
+const QueryMedia = (mediaQuery, callback = null) => {
+  let query = window.matchMedia(mediaQuery);
+
+  if (callback == null) {
+    return query.matches;
+  } else {
+    callback({
+      matches: query.matches,
+      remove: null
+    });
+
+    let ObserveResult = matches => {
+      callback({
+        matches: matches,
+        // use removeListener to support legacy browsers like 11 
+        //remove: () => query.removeEventListener('change', handler)
+        remove: () => query.removeListener(handler)
+      });
+    };
+
+    let handler = e => {
+      ObserveResult(e.matches);
+    }; // use addListener to support legacy browsers like 11
+
+
+    query.addListener(handler); //query.addEventListener('change', handler);
+  }
+};
+
+exports.QueryMedia = QueryMedia;
+
+},{}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.RestartAnimateIO = exports.DestroyAnimateIO = exports.ResetAnimateIO = exports.KillAllObservers = exports.ObserveElementsContinuous = exports.ObserveElementsOnce = exports.ObserveAIOElements = void 0;
+exports.ResetMutationObserver = exports.StopMutationObserver = exports.RemoveMutationListener = exports.AddMutationListener = void 0;
+let mutationObserver = null;
+
+(() => {
+  mutationObserver = new MutationObserver(mutations => {
+    subscribers.forEach(subscriber => {
+      subscriber.callback(mutations);
+    });
+  }); //https://developer.mozilla.org/en-US/docs/Web/API/MutationObserverInit
+
+  mutationObserver.observe(document, {
+    attributes: false,
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+})();
+
+let subscribers = []; // {
+//     name: "",
+//     callback: method
+// };
+
+const AddMutationListener = subscriber => {
+  // check if already subscribed
+  let alreadySubscribed = subscribers.some(s => s.name == subscriber.name);
+  if (!alreadySubscribed) subscribers.push(subscriber);
+};
+
+exports.AddMutationListener = AddMutationListener;
+
+const RemoveMutationListener = name => {
+  let index = subscribers.findIndex(s => s.name == name);
+
+  if (index > -1) {
+    subscribers.splice(index, 1);
+  }
+
+  if (subscribers.length == 0) {
+    StopMutationObserver();
+  }
+};
+
+exports.RemoveMutationListener = RemoveMutationListener;
+
+const StopMutationObserver = () => {
+  mutationObserver.disconnect();
+};
+
+exports.StopMutationObserver = StopMutationObserver;
+
+const ResetMutationObserver = () => {
+  StopMutationObserver();
+  subscribers = [];
+};
+
+exports.ResetMutationObserver = ResetMutationObserver;
+
+},{}],7:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RestartAnimateIO = exports.DestroyAnimateIO = exports.ResetAnimateIO = exports.KillAllObservers = exports.ObserveElementsContinuous = exports.ObserveElementsOnce = exports.InitAIObservers = void 0;
 
 var _Settings = require("./Settings");
 
 var _Helpers = require("./Helpers");
 
-let elements = null;
+var _Mutations = require("./Mutations");
+
 let ObserverList = [];
 
+const InitAIObservers = () => {
+  // Scan for all AIO Elements & create observer for all of them
+  // Multiple observers so we can individually disconnect any element that we want
+  ObserveAIOElements(); // look for new observable objects 
+  // start looking for new elements after an arbitrary delay of 2 seconds
+
+  if (_Settings.ObserverSettings.trackMutations) {
+    setTimeout(() => AddNewAIOElements(), 2000);
+  }
+};
+
+exports.InitAIObservers = InitAIObservers;
+
+const AddNewAIOElements = () => {
+  (0, _Mutations.AddMutationListener)({
+    name: 'observer_listener',
+    callback: mutations => {
+      // delay the observer so the animation can be visible a bit
+      setTimeout(() => ObserveAIOElements(), 10);
+    }
+  });
+};
+
+let helperCounter = 0;
+
 const ObserveAIOElements = () => {
-  elements = document.querySelectorAll(`[${_Settings.ObserverSettings.observableAttrName}]`);
+  let AIOElements = document.querySelectorAll(`[${_Settings.ObserverSettings.observableAttrName}]`);
+  let elements = Array.from(AIOElements).filter(elem => !elem.hasAttribute('data-aio-id'));
   elements.forEach((elem, i) => {
-    elem.setAttribute('data-aio-id', `aio_auto_${i}`);
+    elem.setAttribute('data-aio-id', `aio_auto_${++helperCounter}_${i}`);
 
     let repeat = elem.hasAttribute('data-aio-repeat') || _Settings.ObserverSettings.repeat;
 
@@ -365,7 +610,7 @@ const ObserveAIOElements = () => {
     }
 
     let intersectionsettings = {
-      root: _Settings.ObserverSettings.root,
+      root: document.documentElement,
       rootMargin: rootMargin,
       threshold: _Settings.ObserverSettings.threshold
     };
@@ -405,11 +650,9 @@ const ObserveAIOElements = () => {
   });
 };
 
-exports.ObserveAIOElements = ObserveAIOElements;
-
 const ObserveElements = (target, options, callback, repeat) => {
   let defaultOptions = {
-    root: document,
+    root: document.documentElement,
     rootMargin: 0,
     threshold: 0,
     ...options
@@ -467,7 +710,7 @@ const KillAllObservers = () => {
 exports.KillAllObservers = KillAllObservers;
 
 const ResetAnimateIO = () => {
-  killAllObservers();
+  KillAllObservers();
 
   let _elems = document.querySelectorAll(`[${_Settings.ObserverSettings.observableAttrName}]`);
 
@@ -484,7 +727,7 @@ const ResetAnimateIO = () => {
 exports.ResetAnimateIO = ResetAnimateIO;
 
 const DestroyAnimateIO = () => {
-  resetAnimateIO();
+  ResetAnimateIO();
 
   let _elems = document.querySelectorAll(`[${_Settings.ObserverSettings.observableAttrName}]`);
 
@@ -503,32 +746,67 @@ const DestroyAnimateIO = () => {
 exports.DestroyAnimateIO = DestroyAnimateIO;
 
 const RestartAnimateIO = () => {
-  resetAnimateIO();
-  main();
+  ResetAnimateIO();
+  ObserveAIOElements();
 };
 
 exports.RestartAnimateIO = RestartAnimateIO;
 
-},{"./Helpers":4,"./Settings":7}],6:[function(require,module,exports){
+},{"./Helpers":5,"./Mutations":6,"./Settings":9}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Render = void 0;
+exports.ForceRenderLoop = exports.StopRenderLoop = exports.RenderLoop = exports.InitRenderer = void 0;
 
 var _AnimationStateMachine = require("./AnimationStateMachine");
+
+var _Settings = require("./Settings");
 
 let scrollTop = 0;
 let scrollTopPrev = -1;
 let doc = document.documentElement;
+let raf_id = 0; // Request Animate Frame ID
 
-const Render = () => {
+const InitRenderer = () => {
+  let useFps = true;
+  let {
+    fps
+  } = _Settings.AnimationSettings;
+
+  if (fps != null) {
+    let num = parseFloat(fps);
+    useFps = !isNaN(num);
+  }
+
+  if (useFps) {
+    (function animationTimeoutUpdate() {
+      RenderLoop();
+      setTimeout(() => {
+        raf_id = requestAnimationFrame(animationTimeoutUpdate);
+      }, 1000 / fps);
+    })();
+  } else {
+    (function animationUpdate() {
+      RenderLoop();
+      raf_id = requestAnimationFrame(animationUpdate);
+    })();
+  }
+};
+
+exports.InitRenderer = InitRenderer;
+let forceRender = false;
+
+const RenderLoop = () => {
   if (_AnimationStateMachine.StateMachine.activeCount == 0) return;
-  scrollTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-  if (scrollTop == scrollTopPrev) return;
+  scrollTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0); // Exit render loop if no scrolling happened in this frame
+  // Exception: Continue with the render loop if forceRender flag is true
+
+  if (scrollTop == scrollTopPrev && !forceRender) return;
   scrollTopPrev = scrollTop;
   document.body.setAttribute("data-scroll-top", scrollTop);
+  forceRender = false;
 
   let entries = _AnimationStateMachine.StateMachine.elements.filter(entry => entry.ratio > 0);
 
@@ -537,7 +815,7 @@ const Render = () => {
     let elem = entry.domElement;
     let elemTop = elem.offsetTop; //convert offset to absolute
 
-    if (settings.mode == "relative") {
+    if (_Settings.AnimationSettings.mode == "relative") {
       frames.forEach((f, i) => {
         let offset = elemTop + f.offset - window.innerHeight;
         f.absOffset = offset;
@@ -578,7 +856,7 @@ const Render = () => {
   });
 };
 
-exports.Render = Render;
+exports.RenderLoop = RenderLoop;
 
 let _calcInterpolation = (val1, val2, progress) => {
   var valueIndex;
@@ -622,7 +900,20 @@ let setStyle = (elem, key, value) => {
   }
 };
 
-},{"./AnimationStateMachine":2}],7:[function(require,module,exports){
+const StopRenderLoop = () => {
+  cancelAnimationFrame(raf_id);
+}; // Force rederloop when new elements are added to statemachine
+
+
+exports.StopRenderLoop = StopRenderLoop;
+
+const ForceRenderLoop = () => {
+  forceRender = true;
+};
+
+exports.ForceRenderLoop = ForceRenderLoop;
+
+},{"./AnimationStateMachine":2,"./Settings":9}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -632,6 +923,7 @@ exports.OverrideDefaultAnimationSettings = exports.AnimationSettings = exports.O
 const DefaultObserverSettings = {
   delay: 0,
   offset: 0,
+  mode: 'relative',
   observableAttrName: "data-aiobserve",
   enterIntersectionClassName: "aio-enter",
   exitIntersectionClassName: "aio-exit",
@@ -640,8 +932,7 @@ const DefaultObserverSettings = {
   root: document,
   rootMargin: '0px 0px 0px 0px',
   threshold: 0,
-  trackMutations: true,
-  requiredWidth: 1025
+  trackMutations: true
 };
 let ObserverSettings = null;
 exports.ObserverSettings = ObserverSettings;
@@ -656,8 +947,9 @@ const OverrideDefaultObserverSettings = _settings => {
 exports.OverrideDefaultObserverSettings = OverrideDefaultObserverSettings;
 const DefaultAnimationSettings = {
   gridHelper: false,
-  mode: 'relative',
-  fps: null
+  trackMutations: true,
+  fps: null,
+  deactivateBelow: 1025
 };
 let AnimationSettings = null;
 exports.AnimationSettings = AnimationSettings;

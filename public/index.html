@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Animate IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <meta name="author" content="Rohan Gaikwad">
+    <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=Array.from%2CNumber.isNaN%2CArray.prototype.forEach%2CIntersectionObserver%2CObject.entries
+"></script> -->
+    <script src="js/polyfill.min.js"></script>
+    <script src="js/animate-io-es2015.js"></script>
+    <link rel="stylesheet" href="css/animate-io.min.css">
+    <link rel="stylesheet" id="style" href="css/style.min.css">
+</head>
+
+<body>
+
+    <div data-aiobserve data-aio-delay="0" data-aio-repeat class="main">
+        <div class="l1">1</div>
+        <div class="l2">2</div>
+        <div class="l3">3</div>
+    </div>
+    <div class="sep"></div>
+    <h1 data-aio data-aio-600="font-size: calc(28px / 2); color: red;"
+        data-aio-900="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
+
+    <!-- <h1 data-aio data-aio-100="font-size: calc(28px / 2); color: red;" data-aio-200="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
+    <div class="sep"></div>
+    <div class="test" data-aio data-aio-800="font-size: 20px; transform: rotateZ(0deg)" data-aio-1000="font-size: 100px; transform: rotateZ(360deg)">Hello</div>
+    <div class="sep"></div>
+    <div class="test" data-aio-200="font-size: 50px;">Hello1</div> -->
+
+    <script>
+        //console.log(window.AnimateIO)
+        // AnimateIO.InitObservers();
+        // setTimeout(function() {
+        //     let div = document.createElement('div');
+        //     div.className = "rohan";
+        //     div.innerText = "Rohan";
+        //     div.setAttribute('data-aiobserve', '');
+        //     div.setAttribute('data-aio-repeat', '');
+        //     document.body.appendChild(div);
+        // }, 2000)
+        //AnimateIO.init({mode: 'absolute'});
+
+        // AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
+        //     intersection.in = () => {
+        //         console.log('in many');
+        //     }
+        // });
+
+        AnimateIO.Animate({ mode: 'relative', gridHelper: true });
+
+        setTimeout(function () {
+            let div = document.createElement('div');
+            div.className = "rohan";
+            div.innerText = "Rohan";
+            div.setAttribute('data-aio-0', 'font-size: 20px;');
+            div.setAttribute('data-aio-350', 'font-size: 400px;');
+            div.setAttribute('data-aio-repeat', true);
+            document.body.appendChild(div);
+        }, 2000)
+    </script>
+
+</body>
+
+</html>

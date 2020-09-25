@@ -1,17 +1,50 @@
 import { StateMachine } from './AnimationStateMachine'
+import { AnimationSettings } from './Settings';
 
 
 let scrollTop = 0;
 let scrollTopPrev = -1;
 let doc = document.documentElement;
+let raf_id = 0; // Request Animate Frame ID
 
-export const Render = () => {
+export const InitRenderer = () => {
+
+    let useFps = true;
+    let { fps } = AnimationSettings;
+
+    if (fps != null) {
+        let num = parseFloat(fps);
+        useFps = !isNaN(num);
+    }
+
+    if (useFps) {
+        (function animationTimeoutUpdate() {
+            RenderLoop();
+            setTimeout(() => {
+                raf_id = requestAnimationFrame(animationTimeoutUpdate);
+            }, 1000 / fps);
+        }());
+    } else {
+        (function animationUpdate() {
+            RenderLoop();
+            raf_id = requestAnimationFrame(animationUpdate);
+        }());
+    }
+}
+
+let forceRender = false;
+
+export const RenderLoop = () => {
     if (StateMachine.activeCount == 0) return;
 
     scrollTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-    if (scrollTop == scrollTopPrev) return;
+
+    // Exit render loop if no scrolling happened in this frame
+    // Exception: Continue with the render loop if forceRender flag is true
+    if (scrollTop == scrollTopPrev && !forceRender) return;
     scrollTopPrev = scrollTop;
     document.body.setAttribute("data-scroll-top", scrollTop);
+    forceRender = false;
 
     let entries = StateMachine.elements.filter(entry => entry.ratio > 0);
 
@@ -21,7 +54,7 @@ export const Render = () => {
         let elemTop = elem.offsetTop;
 
         //convert offset to absolute
-        if (settings.mode == "relative") {
+        if (AnimationSettings.mode == "relative") {
             frames.forEach((f, i) => {
                 let offset = elemTop + f.offset - window.innerHeight;
                 f.absOffset = offset;
@@ -61,8 +94,6 @@ export const Render = () => {
         }
     });
 }
-
-
 
 let _calcInterpolation = (val1, val2, progress) => {
     var valueIndex;
@@ -108,3 +139,12 @@ let setStyle = (elem, key, value) => {
     }
 }
 
+
+export const StopRenderLoop = () => {
+    cancelAnimationFrame(raf_id);
+}
+
+// Force rederloop when new elements are added to statemachine
+export const ForceRenderLoop = () => {
+    forceRender = true;
+}

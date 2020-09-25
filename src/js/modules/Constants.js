@@ -1,0 +1,1 @@
+export const SMO_ID_ATTR_NAME = 'data-aio-smo-id';

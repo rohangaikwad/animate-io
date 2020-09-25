@@ -67,7 +67,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         // override settings passed from initialization
         (0, _Settings.OverrideDefaultObserverSettings)(_settings); // scan for observable elements, attach intersection observer to each
 
-        (0, _Observer.ObserveAIOElements)();
+        (0, _Observer.InitAIObservers)();
       };
 
       var Animate = function Animate(_settings) {
@@ -79,19 +79,20 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
       window.AnimateIO = {
         InitObservers: InitObservers,
+        Observe: _Observer.ObserveElementsContinuous,
+        ObserveOnce: _Observer.ObserveElementsOnce,
+        StopObservers: _Observer.KillAllObservers,
+        DestroyObservers: _Observer.DestroyAnimateIO,
+        RestartObservers: _Observer.RestartAnimateIO,
         Animate: Animate,
-        observe: _Observer.ObserveElementsContinuous,
-        observeOnce: _Observer.ObserveElementsOnce,
-        stop: _Observer.KillAllObservers,
-        reset: _Observer.RestartAnimateIO,
-        restart: _Observer.RestartAnimateIO,
-        destroy: _Observer.DestroyAnimateIO
+        AnimateEnd: _Animations.KillAnimateInstance,
+        AnimateRestart: _Animations.RestartAnimateInstance
       };
     })(window);
   }, {
     "./modules/Animations": 3,
-    "./modules/Observer": 5,
-    "./modules/Settings": 7
+    "./modules/Observer": 7,
+    "./modules/Settings": 9
   }],
   2: [function (require, module, exports) {
     "use strict";
@@ -99,11 +100,13 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.ObserveStateMachineObjects = exports.InitAnimationStateMachine = exports.StateMachine = void 0;
+    exports.ResetStateMachine = exports.StopAnimationObserver = exports.ObserveStateMachineObjects = exports.InitiateAnimationObserver = exports.UpdateStateMachine = exports.InitAnimationStateMachine = exports.StateMachine = void 0;
 
-    var _Helpers = require("./Helpers");
+    var _Constants = require("./Constants");
 
     var _Render = require("./Render");
+
+    var _Settings = require("./Settings");
 
     var StateMachine = {
       activeCount: 0,
@@ -114,52 +117,79 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
     var InitAnimationStateMachine = function InitAnimationStateMachine() {
       // filter out data-aio-<int> elements and push them to the StateMachine so that we can track them later
-      populateStateMachine(); // attach an observer to all the elements added to the State Machine
-      // observeStateMachineObjects(fps);
+      populateStateMachine(function (count) {
+        console.log("".concat(count, " animateable elements found"));
+      });
+    };
+
+    exports.InitAnimationStateMachine = InitAnimationStateMachine;
+
+    var UpdateStateMachine = function UpdateStateMachine() {
+      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+      populateStateMachine(function (count) {
+        console.log("".concat(count, " new animateable elements found"));
+        ObserveStateMachineObjects(); // Wait for observers to get attached to new elements
+
+        setTimeout(function () {
+          return (0, _Render.ForceRenderLoop)();
+        }, 100);
+      });
     }; // State Machine Object Template
 
 
-    exports.InitAnimationStateMachine = InitAnimationStateMachine;
+    exports.UpdateStateMachine = UpdateStateMachine;
     var SMOTemplate = {
       id: '',
       domElement: null,
       ratio: 0,
       repeat: true,
-      keyframes: []
+      keyframes: [],
+      observerAttached: false
     };
+    var populateCounter = 0; // use this counter to generate unique ids for elements
 
-    var populateStateMachine = function populateStateMachine() {
-      var _elements = document.getElementsByTagName("*");
+    var populateStateMachine = function populateStateMachine(done) {
+      var AllElements = document.getElementsByTagName("*"); // Filter elements with the signature: data-aio-<int>
+      // Example: data-aio-1000, data-aio-0
 
-      _toConsumableArray(_elements).forEach(function (elem, i) {
-        var attributes = elem.attributes; // Match elements with the signature: data-aio-<int>
-        // Example: data-aio-1000, data-aio-0
+      var AIOElements = _toConsumableArray(AllElements).filter(function (elem) {
+        var attributes = Object.entries(elem.attributes).map(function (a) {
+          return a[1];
+        });
+        return attributes.some(function (f) {
+          return /^data-aio--?[0-9]+/g.test(f.name);
+        });
+      }); // remove elements which have already been added & tracked inside animation state machien list
 
-        var matched = Array.from(attributes).some(function (attr) {
+
+      var _elements = AIOElements.filter(function (elem) {
+        return !elem.hasAttribute(_Constants.SMO_ID_ATTR_NAME);
+      });
+
+      _elements.forEach(function (elem, i) {
+        var attributes = elem.attributes;
+        var keyframes = Array.from(attributes).filter(function (attr) {
           return /^data-aio--?[0-9]+/g.test(attr.name);
         });
+        var id = "aio-pl-".concat(++populateCounter, "-").concat(i);
+        elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
 
-        if (matched) {
-          var keyframes = Array.from(attributes).filter(function (attr) {
-            return /^data-aio--?[0-9]+/g.test(attr.name);
-          });
-          var id = "aio-pl-".concat(i);
-          elem.setAttribute('data-aio-pl-id', id);
+        var entry = _objectSpread({}, SMOTemplate);
 
-          var entry = _objectSpread({}, SMOTemplate);
+        entry.id = id;
+        entry.repeat = elem.hasAttribute('data-aio-repeat');
+        entry.domElement = elem;
+        entry.keyframes = processKeyFrames(keyframes, elem);
+        entry.observerAttached = false;
 
-          entry.id = id;
-          entry.repeat = (0, _Helpers.GetAttrVal)(elem, 'data-aio-repeat', true);
-          entry.domElement = elem;
-          entry.keyframes = processKeyFrames(keyframes, elem);
-
-          if (keyframes.length == 1) {
-            StateMachine.singleFrameElements.push(entry);
-          } else {
-            StateMachine.elements.push(entry);
-          }
+        if (keyframes.length == 1) {
+          StateMachine.singleFrameElements.push(entry);
+        } else {
+          StateMachine.elements.push(entry);
         }
       });
+
+      done(_elements.length);
     };
 
     var processKeyFrames = function processKeyFrames(kf, elem) {
@@ -194,7 +224,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         elem.setAttribute("data-kf-".concat(i), _offset);
       }); //convert offset to absolute
 
-      if (settings.mode == "relative") {
+      if (_Settings.AnimationSettings.mode == "relative") {
         frames.forEach(function (f, i) {
           var offset = elem.offsetTop + f.offset - window.innerHeight;
           f.absOffset = offset;
@@ -241,78 +271,89 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       }
     };
 
-    var ObserveStateMachineObjects = function ObserveStateMachineObjects() {
-      console.log(StateMachine);
+    var AnimationObserver = null;
 
-      if (StateMachine.elements.length > 0) {
-        var observerSettings = {
-          root: document,
-          rootMargin: 0,
-          threshold: 0
-        }; // init observer
+    var InitiateAnimationObserver = function InitiateAnimationObserver() {
+      var observerSettings = {
+        root: document.documentElement,
+        rootMargin: '0px',
+        threshold: 0
+      }; // init observer
 
-        var observer = new IntersectionObserver(function (entries, observerSettings) {
-          //console.log(entries)
-          entries.forEach(function (entry) {
-            var elem = entry.target;
-            var aioPlId = elem.getAttribute('data-aio-pl-id');
-            var stateMachineObject = StateMachine.elements.filter(function (o) {
-              return o.id == aioPlId;
-            })[0];
-            var intersected = false;
-            var ratio = entry.intersectionRatio;
-            stateMachineObject.ratio = ratio;
-            elem.setAttribute('data-ratio', ratio);
+      AnimationObserver = new IntersectionObserver(function (entries, observer) {
+        //console.log(entries)
+        entries.forEach(function (entry) {
+          var elem = entry.target;
+          var aioPlId = elem.getAttribute(_Constants.SMO_ID_ATTR_NAME);
+          var stateMachineObject = StateMachine.elements.filter(function (o) {
+            return o.id == aioPlId;
+          })[0];
+          var intersected = false;
+          var ratio = entry.intersectionRatio;
+          stateMachineObject.ratio = ratio;
+          elem.setAttribute('data-ratio', ratio);
 
-            if (ratio > 0) {
-              intersected = true;
-              StateMachine.activeCount++;
+          if (ratio > 0) {
+            intersected = true;
+            StateMachine.activeCount++;
+          }
+
+          if (ratio == 0 && intersected) {
+            StateMachine.activeCount--;
+
+            if (!stateMachineObject.repeat) {
+              observer.unobserve(elem);
+              var smoIndex = StateMachine.elements.findIndex(function (o) {
+                return o.id == aioPlId;
+              });
+              StateMachine.elements.splice(smoIndex, 1);
             }
-
-            if (ratio == 0 && intersected) {
-              StateMachine.activeCount--;
-
-              if (!stateMachineObject.repeat) {
-                observer.unobserve(elem);
-                var smoIndex = StateMachine.elements.findIndex(function (o) {
-                  return o.id == aioPlId;
-                });
-                StateMachine.elements.splice(smoIndex, 1);
-              }
-            }
-          });
+          }
         });
-        StateMachine.elements.forEach(function (elem) {
-          observer.observe(elem.domElement);
-        }); // init render
+      }, observerSettings);
+    };
 
-        var useFps = true;
+    exports.InitiateAnimationObserver = InitiateAnimationObserver;
 
-        if (fps != null) {
-          var num = parseFloat(fps);
-          useFps = !isNaN(num);
-        }
-
-        if (useFps) {
-          (function animationTimeoutUpdate() {
-            (0, _Render.Render)();
-            setTimeout(function () {
-              requestAnimationFrame(animationTimeoutUpdate);
-            }, 1000 / fps);
-          })();
-        } else {
-          (function animationUpdate() {
-            (0, _Render.Render)();
-            requestAnimationFrame(animationUpdate);
-          })();
-        }
+    var ObserveStateMachineObjects = function ObserveStateMachineObjects() {
+      if (StateMachine.elements.length > 0) {
+        var newStateMachineElements = StateMachine.elements.filter(function (elem) {
+          return !elem.observerAttached;
+        });
+        newStateMachineElements.forEach(function (elem) {
+          AnimationObserver.observe(elem.domElement);
+          elem.observerAttached = true;
+        });
       }
     };
 
     exports.ObserveStateMachineObjects = ObserveStateMachineObjects;
+
+    var StopAnimationObserver = function StopAnimationObserver() {
+      AnimationObserver.disconnect();
+    };
+
+    exports.StopAnimationObserver = StopAnimationObserver;
+
+    var RemoveSMOAttributes = function RemoveSMOAttributes() {
+      var StateMachineObjects = [].concat(_toConsumableArray(StateMachine.elements), _toConsumableArray(StateMachine.singleFrameElements));
+      StateMachineObjects.forEach(function (smo) {
+        smo.domElement.removeAttribute(_Constants.SMO_ID_ATTR_NAME);
+      });
+    };
+
+    var ResetStateMachine = function ResetStateMachine() {
+      RemoveSMOAttributes();
+      StateMachine.activeCount = 0;
+      StateMachine.elements = [];
+      StateMachine.singleFrameElements = [];
+    };
+
+    exports.ResetStateMachine = ResetStateMachine;
   }, {
-    "./Helpers": 4,
-    "./Render": 6
+    "./Constants": 4,
+    "./Render": 8,
+    "./Settings": 9
   }],
   3: [function (require, module, exports) {
     "use strict";
@@ -320,32 +361,119 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.InitAnimations = void 0;
+    exports.RestartAnimateInstance = exports.KillAnimateInstance = exports.InitAnimations = void 0;
 
     var _AnimationStateMachine = require("./AnimationStateMachine");
 
     var _Helpers = require("./Helpers");
 
+    var _Mutations = require("./Mutations");
+
+    var _Render = require("./Render");
+
     var _Settings = require("./Settings");
 
+    var AnimationsInitialized = false;
+
     var InitAnimations = function InitAnimations() {
-      //scan for animateable elements, build the state machine
-      (0, _AnimationStateMachine.InitAnimationStateMachine)(); // init rendering for all the elements
+      if (AnimationsInitialized) {
+        console.error('AnimateIO.Animate() already initialized. To start a new instance, please stop the current animations instance using:\nAnimateIO.StopAnimations();');
+      } // Check if browser dimensions are correct
 
-      (0, _AnimationStateMachine.ObserveStateMachineObjects)();
 
-      if (_Settings.ObserverSettings.gridHelper) {
+      var canInitialize = (0, _Helpers.QueryMedia)("(min-width: ".concat(_Settings.AnimationSettings.deactivateBelow, "px)"));
+
+      if (!canInitialize) {
+        console.log("AnimateIO.Animate() can't initialize since the screen width is less than ".concat(_Settings.AnimationSettings.deactivateBelow));
+        return;
+      } // Initiate animation observer
+
+
+      (0, _AnimationStateMachine.InitiateAnimationObserver)(); //scan for animateable elements, build the state machine
+
+      (0, _AnimationStateMachine.InitAnimationStateMachine)(); // attach an observer to all the elements added to the State Machine
+
+      (0, _AnimationStateMachine.ObserveStateMachineObjects)(); // init rendering for all the elements
+
+      (0, _Render.InitRenderer)(); // look for new animateable objects with the signature data-aio-<int>
+      // start looking for new elements after an arbitrary delay of 2 seconds
+
+      if (_Settings.AnimationSettings.trackMutations) {
+        setTimeout(function () {
+          return AddNewElementsToStateMachine();
+        }, 2000);
+      } // show a helper grid and markers for where an animation will start and end
+
+
+      if (_Settings.AnimationSettings.gridHelper) {
         setTimeout(function () {
           return (0, _Helpers.DrawGrid)();
         }, 1000);
       }
+
+      AnimationsInitialized = true; // Check for browser resolution changes    
+
+      WatchBrowserResize();
     };
 
     exports.InitAnimations = InitAnimations;
+
+    var AddNewElementsToStateMachine = function AddNewElementsToStateMachine() {
+      (0, _Mutations.AddMutationListener)({
+        name: 'animations_listener',
+        callback: function callback(mutations) {
+          (0, _AnimationStateMachine.UpdateStateMachine)();
+        }
+      });
+    };
+
+    var WatchBrowserResize = function WatchBrowserResize() {
+      (0, _Helpers.QueryMedia)("(min-width: ".concat(_Settings.AnimationSettings.deactivateBelow, "px)"), function (response) {
+        if (response.matches) {
+          // Start animations if not already initialized
+          if (!AnimationsInitialized) {
+            if (response.remove != null) {
+              response.remove();
+              console.log("Restarting AnimateIO.Animate as browser width is >= ".concat(_Settings.AnimationSettings.deactivateBelow, "px"));
+              InitAnimations();
+            }
+          }
+        } else {
+          // stop the animations if browser window shrinks below defined width
+          if (AnimationsInitialized) {
+            console.log("Stopping AnimateIO.Animate as browser width is < ".concat(_Settings.AnimationSettings.deactivateBelow, "px"));
+            KillAnimateInstance();
+          }
+        }
+      });
+    };
+
+    var KillAnimateInstance = function KillAnimateInstance() {
+      // stop rendering
+      (0, _Render.StopRenderLoop)(); // Stop animation intersection observer
+
+      (0, _AnimationStateMachine.StopAnimationObserver)(); // disconnect mutation observer
+
+      (0, _Mutations.ResetMutationObserver)(); // reset state machine & remove state machine id attribute
+
+      (0, _AnimationStateMachine.ResetStateMachine)();
+      AnimationsInitialized = false;
+    };
+
+    exports.KillAnimateInstance = KillAnimateInstance;
+
+    var RestartAnimateInstance = function RestartAnimateInstance() {
+      KillAnimateInstance();
+      InitAnimations();
+    };
+
+    exports.RestartAnimateInstance = RestartAnimateInstance;
   }, {
     "./AnimationStateMachine": 2,
-    "./Helpers": 4,
-    "./Settings": 7
+    "./Helpers": 5,
+    "./Mutations": 6,
+    "./Render": 8,
+    "./Settings": 9
   }],
   4: [function (require, module, exports) {
     "use strict";
@@ -353,7 +481,17 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
+    exports.SMO_ID_ATTR_NAME = void 0;
+    var SMO_ID_ATTR_NAME = 'data-aio-smo-id';
+    exports.SMO_ID_ATTR_NAME = SMO_ID_ATTR_NAME;
+  }, {}],
+  5: [function (require, module, exports) {
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.QueryMedia = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
 
     var GetAttrVal = function GetAttrVal(elem, attr, defaultValue) {
       var val = defaultValue;
@@ -395,26 +533,161 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     };
 
     exports.DrawGrid = DrawGrid;
+
+    var QueryMedia = function QueryMedia(mediaQuery) {
+      var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+      var query = window.matchMedia(mediaQuery);
+
+      if (callback == null) {
+        return query.matches;
+      } else {
+        callback({
+          matches: query.matches,
+          remove: null
+        });
+
+        var ObserveResult = function ObserveResult(matches) {
+          callback({
+            matches: matches,
+            // use removeListener to support legacy browsers like 11 
+            //remove: () => query.removeEventListener('change', handler)
+            remove: function remove() {
+              return query.removeListener(handler);
+            }
+          });
+        };
+
+        var handler = function handler(e) {
+          ObserveResult(e.matches);
+        }; // use addListener to support legacy browsers like 11
+
+
+        query.addListener(handler); //query.addEventListener('change', handler);
+      }
+    };
+
+    exports.QueryMedia = QueryMedia;
   }, {}],
-  5: [function (require, module, exports) {
+  6: [function (require, module, exports) {
     "use strict";
 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.RestartAnimateIO = exports.DestroyAnimateIO = exports.ResetAnimateIO = exports.KillAllObservers = exports.ObserveElementsContinuous = exports.ObserveElementsOnce = exports.ObserveAIOElements = void 0;
+    exports.ResetMutationObserver = exports.StopMutationObserver = exports.RemoveMutationListener = exports.AddMutationListener = void 0;
+    var mutationObserver = null;
+
+    (function () {
+      mutationObserver = new MutationObserver(function (mutations) {
+        subscribers.forEach(function (subscriber) {
+          subscriber.callback(mutations);
+        });
+      }); //https://developer.mozilla.org/en-US/docs/Web/API/MutationObserverInit
+
+      mutationObserver.observe(document, {
+        attributes: false,
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    })();
+
+    var subscribers = []; // {
+    //     name: "",
+    //     callback: method
+    // };
+
+    var AddMutationListener = function AddMutationListener(subscriber) {
+      // check if already subscribed
+      var alreadySubscribed = subscribers.some(function (s) {
+        return s.name == subscriber.name;
+      });
+      if (!alreadySubscribed) subscribers.push(subscriber);
+    };
+
+    exports.AddMutationListener = AddMutationListener;
+
+    var RemoveMutationListener = function RemoveMutationListener(name) {
+      var index = subscribers.findIndex(function (s) {
+        return s.name == name;
+      });
+
+      if (index > -1) {
+        subscribers.splice(index, 1);
+      }
+
+      if (subscribers.length == 0) {
+        StopMutationObserver();
+      }
+    };
+
+    exports.RemoveMutationListener = RemoveMutationListener;
+
+    var StopMutationObserver = function StopMutationObserver() {
+      mutationObserver.disconnect();
+    };
+
+    exports.StopMutationObserver = StopMutationObserver;
+
+    var ResetMutationObserver = function ResetMutationObserver() {
+      StopMutationObserver();
+      subscribers = [];
+    };
+
+    exports.ResetMutationObserver = ResetMutationObserver;
+  }, {}],
+  7: [function (require, module, exports) {
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.RestartAnimateIO = exports.DestroyAnimateIO = exports.ResetAnimateIO = exports.KillAllObservers = exports.ObserveElementsContinuous = exports.ObserveElementsOnce = exports.InitAIObservers = void 0;
 
     var _Settings = require("./Settings");
 
     var _Helpers = require("./Helpers");
 
-    var elements = null;
+    var _Mutations = require("./Mutations");
+
     var ObserverList = [];
 
+    var InitAIObservers = function InitAIObservers() {
+      // Scan for all AIO Elements & create observer for all of them
+      // Multiple observers so we can individually disconnect any element that we want
+      ObserveAIOElements(); // look for new observable objects 
+      // start looking for new elements after an arbitrary delay of 2 seconds
+
+      if (_Settings.ObserverSettings.trackMutations) {
+        setTimeout(function () {
+          return AddNewAIOElements();
+        }, 2000);
+      }
+    };
+
+    exports.InitAIObservers = InitAIObservers;
+
+    var AddNewAIOElements = function AddNewAIOElements() {
+      (0, _Mutations.AddMutationListener)({
+        name: 'observer_listener',
+        callback: function callback(mutations) {
+          // delay the observer so the animation can be visible a bit
+          setTimeout(function () {
+            return ObserveAIOElements();
+          }, 10);
+        }
+      });
+    };
+
+    var helperCounter = 0;
+
     var ObserveAIOElements = function ObserveAIOElements() {
-      elements = document.querySelectorAll("[".concat(_Settings.ObserverSettings.observableAttrName, "]"));
+      var AIOElements = document.querySelectorAll("[".concat(_Settings.ObserverSettings.observableAttrName, "]"));
+      var elements = Array.from(AIOElements).filter(function (elem) {
+        return !elem.hasAttribute('data-aio-id');
+      });
       elements.forEach(function (elem, i) {
-        elem.setAttribute('data-aio-id', "aio_auto_".concat(i));
+        elem.setAttribute('data-aio-id', "aio_auto_".concat(++helperCounter, "_").concat(i));
 
         var repeat = elem.hasAttribute('data-aio-repeat') || _Settings.ObserverSettings.repeat;
 
@@ -442,7 +715,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
 
         var intersectionsettings = {
-          root: _Settings.ObserverSettings.root,
+          root: document.documentElement,
           rootMargin: rootMargin,
           threshold: _Settings.ObserverSettings.threshold
         };
@@ -482,11 +755,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       });
     };
 
-    exports.ObserveAIOElements = ObserveAIOElements;
-
     var ObserveElements = function ObserveElements(target, options, callback, repeat) {
       var defaultOptions = _objectSpread({
-        root: document,
+        root: document.documentElement,
         rootMargin: 0,
         threshold: 0
       }, options);
@@ -550,7 +821,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     exports.KillAllObservers = KillAllObservers;
 
     var ResetAnimateIO = function ResetAnimateIO() {
-      killAllObservers();
+      KillAllObservers();
 
       var _elems = document.querySelectorAll("[".concat(_Settings.ObserverSettings.observableAttrName, "]"));
 
@@ -567,7 +838,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     exports.ResetAnimateIO = ResetAnimateIO;
 
     var DestroyAnimateIO = function DestroyAnimateIO() {
-      resetAnimateIO();
+      ResetAnimateIO();
 
       var _elems = document.querySelectorAll("[".concat(_Settings.ObserverSettings.observableAttrName, "]"));
 
@@ -584,35 +855,69 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     exports.DestroyAnimateIO = DestroyAnimateIO;
 
     var RestartAnimateIO = function RestartAnimateIO() {
-      resetAnimateIO();
-      main();
+      ResetAnimateIO();
+      ObserveAIOElements();
     };
 
     exports.RestartAnimateIO = RestartAnimateIO;
   }, {
-    "./Helpers": 4,
-    "./Settings": 7
+    "./Helpers": 5,
+    "./Mutations": 6,
+    "./Settings": 9
   }],
-  6: [function (require, module, exports) {
+  8: [function (require, module, exports) {
     "use strict";
 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.Render = void 0;
+    exports.ForceRenderLoop = exports.StopRenderLoop = exports.RenderLoop = exports.InitRenderer = void 0;
 
     var _AnimationStateMachine = require("./AnimationStateMachine");
+
+    var _Settings = require("./Settings");
 
     var scrollTop = 0;
     var scrollTopPrev = -1;
     var doc = document.documentElement;
+    var raf_id = 0; // Request Animate Frame ID
 
-    var Render = function Render() {
+    var InitRenderer = function InitRenderer() {
+      var useFps = true;
+      var fps = _Settings.AnimationSettings.fps;
+
+      if (fps != null) {
+        var num = parseFloat(fps);
+        useFps = !isNaN(num);
+      }
+
+      if (useFps) {
+        (function animationTimeoutUpdate() {
+          RenderLoop();
+          setTimeout(function () {
+            raf_id = requestAnimationFrame(animationTimeoutUpdate);
+          }, 1000 / fps);
+        })();
+      } else {
+        (function animationUpdate() {
+          RenderLoop();
+          raf_id = requestAnimationFrame(animationUpdate);
+        })();
+      }
+    };
+
+    exports.InitRenderer = InitRenderer;
+    var forceRender = false;
+
+    var RenderLoop = function RenderLoop() {
       if (_AnimationStateMachine.StateMachine.activeCount == 0) return;
-      scrollTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-      if (scrollTop == scrollTopPrev) return;
+      scrollTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0); // Exit render loop if no scrolling happened in this frame
+      // Exception: Continue with the render loop if forceRender flag is true
+
+      if (scrollTop == scrollTopPrev && !forceRender) return;
       scrollTopPrev = scrollTop;
       document.body.setAttribute("data-scroll-top", scrollTop);
+      forceRender = false;
 
       var entries = _AnimationStateMachine.StateMachine.elements.filter(function (entry) {
         return entry.ratio > 0;
@@ -623,7 +928,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         var elem = entry.domElement;
         var elemTop = elem.offsetTop; //convert offset to absolute
 
-        if (settings.mode == "relative") {
+        if (_Settings.AnimationSettings.mode == "relative") {
           frames.forEach(function (f, i) {
             var offset = elemTop + f.offset - window.innerHeight;
             f.absOffset = offset;
@@ -672,7 +977,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       });
     };
 
-    exports.Render = Render;
+    exports.RenderLoop = RenderLoop;
 
     var _calcInterpolation = function _calcInterpolation(val1, val2, progress) {
       var valueIndex;
@@ -715,10 +1020,24 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         style[key] = value;
       }
     };
+
+    var StopRenderLoop = function StopRenderLoop() {
+      cancelAnimationFrame(raf_id);
+    }; // Force rederloop when new elements are added to statemachine
+
+
+    exports.StopRenderLoop = StopRenderLoop;
+
+    var ForceRenderLoop = function ForceRenderLoop() {
+      forceRender = true;
+    };
+
+    exports.ForceRenderLoop = ForceRenderLoop;
   }, {
-    "./AnimationStateMachine": 2
+    "./AnimationStateMachine": 2,
+    "./Settings": 9
   }],
-  7: [function (require, module, exports) {
+  9: [function (require, module, exports) {
     "use strict";
 
     var _DefaultObserverSetti;
@@ -730,6 +1049,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     var DefaultObserverSettings = (_DefaultObserverSetti = {
       delay: 0,
       offset: 0,
+      mode: 'relative',
       observableAttrName: "data-aiobserve",
       enterIntersectionClassName: "aio-enter",
       exitIntersectionClassName: "aio-exit",
@@ -737,7 +1057,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       threshold: 0,
       root: document,
       rootMargin: '0px 0px 0px 0px'
-    }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _defineProperty(_DefaultObserverSetti, "requiredWidth", 1025), _DefaultObserverSetti);
+    }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _DefaultObserverSetti);
     var ObserverSettings = null;
     exports.ObserverSettings = ObserverSettings;
 
@@ -749,8 +1069,9 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     exports.OverrideDefaultObserverSettings = OverrideDefaultObserverSettings;
     var DefaultAnimationSettings = {
       gridHelper: false,
-      mode: 'relative',
-      fps: null
+      trackMutations: true,
+      fps: null,
+      deactivateBelow: 1025
     };
     var AnimationSettings = null;
     exports.AnimationSettings = AnimationSettings;
