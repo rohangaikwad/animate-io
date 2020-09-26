@@ -15,7 +15,7 @@ Animate IO is a JavaScript library which allows you to perform animations based 
   1. Observe when a desired HTML Element scrolls in & out of the viewport. 
   1. Add & remove user defined class names from a HTML Element as it scrolls in & out of the viewport.
   1. Lazily add custom attributes once the HTML Element becomes visible in the viewport.
-  1. Transform CSS properties on page scroll like parallax effects.
+  1. Animate/Transform CSS properties on page scroll (Example: Parallax effect).
 
 &nbsp;
 
@@ -40,15 +40,12 @@ Array.prototype.forEach,IntersectionObserver,Object.entries"></script>
 <!-- AnimateIO library transformed using Babel -->
 <script src="https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io-es2015.min.js"></script>
 ```
-&nbsp;
-&nbsp;
-&nbsp;
-&nbsp;
 
 ### Step 2: Add the Stylesheet tags (Optional)
-Grab animate-io.min.css from the dist folder and include it in the HTML file as follows
+Grab animate-io.min.css from the dist folder and include it in the HTML file as follows.
+Include this file add `fade-in`, `fade-out` animations.
 ```html
-<link rel="stylesheet" href="animate-io.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io.min.css">
 ```
 
 ### Step 3: Add attributes on elements that you want to animate or observe if they are visible in the viewport
@@ -81,6 +78,74 @@ AnimateIO.Animate();
 AnimateIO.InitObservers();
 ```
 
+&nbsp;
+
+## Documentation
+### Methods
+###### `AnimateIO.InitObservers(options)`
+>Start observing all the HTML elements that have the attribute `data-aiobserve`. Add or remove custom classes as defined in the HTML Element by using the attribute `data-aiobserve`, `data-aio-entry-class`, `data-aio-exit-class`. Lazily add attributes defined in the `data-aio-lazy-attr` attribute as a JSON stringified array, to the HTML Element when it becomes visible in the viewport.
+
+parameter|type|description
+-|-|-
+`options`|object [ObserverOptions](#observeroptions)|[Optional] Change default behaviour by passing arguments via the `options` object
+
+###### `AnimateIO.StopObservers()`
+>Stop observing all the HTML elements that have the attribute `data-aiobserve` 
+
+###### `AnimateIO.RestartObservers()`
+>Restart observing all the HTML elements that have the attribute `data-aiobserve` 
+
+###### `AnimateIO.DestroyObservers()`
+>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. 
+
+###### `AnimateIO.Observe(target, options, callback)`
+>This method is similar to [AnimateIO.InitObservers()](#as) but is used to manually observe the target (`HTMLElement`/`NodeList`/`HTMLCollection`) when it becomes visible in the viewport. An IntersectionObserver is attached to the provided target and the callback gets executed whenever the target becomes visible in the viewport.
+
+parameter|type|description
+-|-|-
+`target`|[`HTMLElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement) / [`NodeList`](https://developer.mozilla.org/en-US/docs/Web/API/NodeList) / [`HTMLCollection`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)|Use the `target` parameter to observe the desired element(s).
+`options`|[`IntersectionObserverInit`](https://www.w3.org/TR/intersection-observer/#dictdef-intersectionobserverinit) dictionary|The options object passed into the IntersectionObserver() constructor let you control the circumstances under which the observer's callback is invoked. It has the following fields: `root`, `rootMargin`, `threshold`
+`callback`|function|The function passed in the `callback` parameter, gets executed when the target scrolls in & out of the viewport.
+
+###### `AnimateIO.ObserveOnce(target, options, callback)`
+>This method is similar to [AnimateIO.Observe()](#as) but the callback is executed only once. We disconnect the IntersectionObserver once the target becomes visible in the viewport and stop observing it further.
+
+###### `AnimateIO.Animate(options)`
+>Start animating CSS properties on all the HTML elements that have the attribute `data-aio-<number>`. 
+
+parameter|type|description
+-|-|-
+`options`|object [AnimationOptions](#animationoptions)|[Optional] Change default behaviour by passing arguments via the `options` object
+
+###### `AnimateIO.AnimateEnd()`
+>Stops animations/transformation all the HTML elements that have the attribute `data-aio-<number>`
+
+###### `AnimateIO.AnimateRestart()`
+>Restarts animations/transformation all the HTML elements that have the attribute `data-aio-<number>`
+
+### Options
+###### `ObserverOptions`
+>ObserverOptions object consists of the below mentioned properties and values.
+
+propertyName|defaultValue|description
+-|-|-
+`delay`|0|Time delay in performing actions after the target scrolls in and out of the viewport.
+`repeat`|false|By default we are disconnecting all the observers once their target becomes visible. To change this default behaviour, set `repeat` to **true**
+`enterIntersectionClassName`|'aio-enter'|When the target becomes visible in the viewport, a class named `aio-enter` gets added to the element by default. Use `enterIntersectionClassName` to change this class name to anything else.
+`exitIntersectionClassName`|'aio-exit'|When the target goes out of the viewport, a class named `aio-exit` gets added to the element by default. Use `exitIntersectionClassName` to change this class name to anything else.
+`trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
+`mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
+
+###### `AnimationOptions`
+>AnimationOptions object consists of the below mentioned properties and values.
+
+propertyName|defaultValue|description
+-|-|-
+`mode`|'relative'|Time delay in performing actions after the target scrolls in and out of the viewport.
+`fps`|null|The amount of css property transformations/calculations to perform in a second. The higher the number, the smoother will be the animation, but this will come at the cost of performance. By default this is set to null and the browser chooses the optimal number of calculations to perform per second using [`window.requestAnimationFrame()`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+`trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
+`mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
+`gridHelper`|false|Use this to display horizontal lines every 100 pixels. This can help you to easily set the desired keyframe positions. By default this is set to false.
 
 ## Links
 https://polyfill.io/v3/url-builder/
