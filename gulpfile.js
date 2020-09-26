@@ -1,3 +1,4 @@
+const fs = require('fs');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 const rename = require('gulp-rename');
@@ -7,9 +8,8 @@ const terser = require('gulp-terser');
 const sass = require('gulp-sass');
 const postcss = require('gulp-postcss');
 const autoprefixer = require('autoprefixer');
-const vinylss = require('vinyl-source-stream');
 const browserify = require('browserify');
-const streamify = require('gulp-streamify');
+const exorcist = require('exorcist');
 
 let public = 'public'
 let public_js = `${public}/js`;
@@ -18,30 +18,52 @@ let dist = 'dist';
 
 gulp.task('compile', (done) => {
     let srcFile = 'src/js/Main.js';
-    var bundleStream = browserify(srcFile, {
+
+    var bundler = browserify(srcFile, {
+        debug: true,
         plugin: [
             [require('esmify')]
         ]
-    }).bundle();
+    });
 
-    bundleStream
-        .pipe(vinylss(srcFile))
-        //gulp.src('src/js/Main.js')
-        //.pipe(sourcemaps.init())
-        .pipe(rename("animate-io.js"))
-        .pipe(gulp.dest(dist))
-        .pipe(gulp.dest(public_js))
-        .pipe(streamify(terser()))
-        .pipe(rename({ suffix: '.min' }))
-        //.pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest(dist))
-        .pipe(gulp.dest(public_js));
-    //.pipe(brotli.compress({ 'extension': 'br' }))
-    //.pipe(gulp.dest(dist));
+    bundler
+        .bundle()
+        .on('error', function (err) {
+            console.error(err);
+            this.emit('end');
+        })
+        .pipe(exorcist(`${dist}/animate-io.js.map`))
+        .pipe(fs.createWriteStream(`${dist}/animate-io.js`, 'utf8'))
     done();
 })
 
-gulp.task('compile-es2015', (done) => {
+gulp.task('minify', (done) => {
+    let srcFile = `${dist}/animate-io.js`;
+
+    gulp.src(srcFile)
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(concat('animate-io.js'))
+        .pipe(gulp.dest(public_js))
+        //.pipe(sourcemaps.write(public_js))
+        .pipe(terser())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(dist))
+        .pipe(gulp.dest(public_js))
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest(dist))
+        .pipe(gulp.dest(public_js));
+    done();
+})
+
+gulp.task('copy-js-map', (done) => {
+    let srcFile = `${dist}/animate-io.js.map`;
+
+    gulp.src(srcFile)
+        .pipe(gulp.dest(public_js));
+    done();
+})
+
+gulp.task('babel-transform-es2015', (done) => {
     let srcFile = 'dist/animate-io.js';
 
     gulp.src(srcFile)
@@ -52,11 +74,11 @@ gulp.task('compile-es2015', (done) => {
         .pipe(gulp.dest(public_js))
         .pipe(terser())
         .pipe(rename({ suffix: '.min' }))
-        //.pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(dist))
-        .pipe(gulp.dest(public_js));
-    //.pipe(brotli.compress({ 'extension': 'br' }))
-    //.pipe(gulp.dest(dist));
+        .pipe(gulp.dest(public_js))
+    // .pipe(sourcemaps.write('.'))
+    // .pipe(gulp.dest(dist))
+    // .pipe(gulp.dest(public_js));
     done();
 })
 
@@ -90,8 +112,8 @@ gulp.task('aio-style', (done) => {
         .pipe(rename('animate-io.min.css'))
         .pipe(gulp.dest(dist))
         .pipe(gulp.dest(public_css));
-        //.pipe(sourcemaps.write('.'))
-        //.pipe(gulp.dest(dist));
+    //.pipe(sourcemaps.write('.'))
+    //.pipe(gulp.dest(dist));
     done();
 });
 
@@ -110,7 +132,9 @@ gulp.task('demo-style', (done) => {
 
 gulp.task("default", () => {
     gulp.watch(['src/js/*.js', 'src/js/modules/*.js'], gulp.parallel('compile'))
-    gulp.watch(`${dist}/animate-io.js`, gulp.parallel('compile-es2015'))
+    gulp.watch(`${dist}/animate-io.js.map`, gulp.parallel('copy-js-map'))
+    gulp.watch(`${dist}/animate-io.js`, gulp.parallel('minify'))
+    gulp.watch(`${dist}/animate-io.js`, gulp.parallel('babel-transform-es2015'))
     //gulp.watch(`${dist}/animate-io-es2015.js`, gulp.parallel('compile-with-polyfill'))
     gulp.watch('src/scss/main.scss', gulp.parallel('aio-style'))
     gulp.watch(`${public_css}/style.scss`, gulp.parallel('demo-style'))

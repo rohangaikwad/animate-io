@@ -27,7 +27,16 @@ export const AddMutationListener = (subscriber) => {
     // check if already subscribed
     let alreadySubscribed = subscribers.some(s => s.name == subscriber.name)
 
-    if (!alreadySubscribed) subscribers.push(subscriber);
+    if (!alreadySubscribed) {
+        subscribers.push(subscriber);
+
+        // Let's say AnimateIO is initialized at T0 and finds zero elements
+        // Then we add a mutation listener after arbitrary delay of 1000ms
+        // It's definitely possible that some mutations might have taken place in this time
+        // And the elements added in this time didn't get registered
+        // To overcome this issue we will manually execute subscriber callback once
+        subscriber.callback();
+    }
 }
 
 export const RemoveMutationListener = (name) => {
