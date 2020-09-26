@@ -10,6 +10,7 @@ const postcss = require('gulp-postcss');
 const autoprefixer = require('autoprefixer');
 const browserify = require('browserify');
 const exorcist = require('exorcist');
+const headerComment = require('gulp-header-comment');
 
 let public = 'public'
 let public_js = `${public}/js`;
@@ -41,7 +42,7 @@ gulp.task('minify', (done) => {
     let srcFile = `${dist}/animate-io.js`;
 
     gulp.src(srcFile)
-        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(sourcemaps.init({ loadMaps: true }))
         .pipe(concat('animate-io.js'))
         .pipe(gulp.dest(public_js))
         //.pipe(sourcemaps.write(public_js))
@@ -129,6 +130,28 @@ gulp.task('demo-style', (done) => {
     done();
 });
 
+gulp.task('header-comments', (done) => {
+    let files = ['animate-io', 'animate-io.min', 'animate-io-es2015', 'animate-io-es2015.min']
+    let distFiles = files.map(f => `${dist}/${f}.js`);
+    gulp.src(distFiles)
+        .pipe(headerComment(`
+            https://github.com/rohangaikwad/animate-io
+            Author: <%= _.capitalize(pkg.author) %>
+            Generated on <%= moment().format('dddd, MMMM Do YYYY, h:mm:ss a') %>
+        `))
+        .pipe(gulp.dest(dist));
+
+    
+    let publicFiles = files.map(f => `${public_js}/${f}.js`);
+    gulp.src(publicFiles)
+        .pipe(headerComment(`
+            https://github.com/rohangaikwad/animate-io
+            Author: <%= _.capitalize(pkg.author) %>
+            Generated on <%= moment().format('dddd, MMMM Do YYYY, h:mm:ss a') %>
+        `))
+        .pipe(gulp.dest(public_js));
+    done();
+});
 
 gulp.task("default", () => {
     gulp.watch(['src/js/*.js', 'src/js/modules/*.js'], gulp.parallel('compile'))
