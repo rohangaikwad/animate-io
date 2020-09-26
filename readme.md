@@ -113,6 +113,7 @@ parameter|type|description
 #### `AnimateIO.ObserveOnce(target, options, callback)`
 >This method is similar to [AnimateIO.Observe()](#as) but the callback is executed only once. We disconnect the IntersectionObserver once the target becomes visible in the viewport and stop observing it further.
 
+&nbsp;
 #### `AnimateIO.Animate(options)`
 >Start animating CSS properties on all the HTML elements that have the attribute `data-aio-<number>`. 
 
