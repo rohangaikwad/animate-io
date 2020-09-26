@@ -1,5 +1,4 @@
 # AnimateIO
-## About
 Animate IO is a JavaScript library which allows you to perform animations based on scroll position & the visibility of an element, using IntersectionObserver.
 
 ## Getting Started
