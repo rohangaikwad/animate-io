@@ -8,18 +8,16 @@ Animate IO is a JavaScript library which allows you to perform animations based 
     1. [Step 2: Add the Stylesheet tags](#step-2-add-the-stylesheet-tags-optional) (Optional)
     1. [Step 2: Add HTML attributes](#step-2-add-the-stylesheet-tags-optional)
     1. [Step 4: Initialize AnimateIO](#step-4-initialize-animateio)
-   
-   
-   
+
+&nbsp;
 
 ## Features
   1. Observe when a desired HTML Element scrolls in & out of the viewport. 
   1. Add & remove user defined class names from a HTML Element as it scrolls in & out of the viewport.
   1. Lazily add custom attributes once the HTML Element becomes visible in the viewport.
   1. Transform CSS properties on page scroll like parallax effects.
-   
-   
-   
+
+&nbsp;
 
 ## Getting Started
 Adding Animate IO to your website is a straight forward process.
@@ -42,6 +40,10 @@ Array.prototype.forEach,IntersectionObserver,Object.entries"></script>
 <!-- AnimateIO library transformed using Babel -->
 <script src="https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io-es2015.min.js"></script>
 ```
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
 
 ### Step 2: Add the Stylesheet tags (Optional)
 Grab animate-io.min.css from the dist folder and include it in the HTML file as follows
