@@ -42,8 +42,8 @@ We have to add the attribute `data-aiobserve` on the elements that we want to ob
 A class called `aio-enter` gets added to the element when it scrolls into the viewport. 
 A class called `aio-exit` gets added to the element when it scrolls out of the viewport and the class `aio-enter` gets removed.
 ```html
-<h1 data-aiobserve>We will observe this element only once.</h1>
-<h2 data-observe data-aio-repeat>We can observe this element as & when it scrolls in/out of the viewport.</h2>
+<h1 data-aiobserve>Observe this element only once.</h1>
+<h2 data-observe data-aio-repeat>Observe this element as & when it scrolls in/out of the viewport.</h2>
 ```
 
 ### Step 4: Initialize AnimateIO
