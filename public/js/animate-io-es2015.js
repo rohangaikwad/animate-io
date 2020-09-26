@@ -1,9 +1,3 @@
-/**
- * https://github.com/rohangaikwad/animate-io
- * Author: Rohan gaikwad
- * Generated on Saturday, September 26th 2020, 10:53:45 pm
- */
-
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -407,7 +401,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       if (_Settings.AnimationSettings.trackMutations) {
         setTimeout(function () {
           return AddNewElementsToStateMachine();
-        }, 2000);
+        }, _Settings.AnimationSettings.mutationWatchDelay);
       } // show a helper grid and markers for where an animation will start and end
 
 
@@ -497,7 +491,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    exports.QueryMedia = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
+    exports.QueryMedia = exports.RemoveClasses = exports.AddClasses = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
 
     var GetAttrVal = function GetAttrVal(elem, attr, defaultValue) {
       var val = defaultValue;
@@ -539,6 +533,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     };
 
     exports.DrawGrid = DrawGrid;
+
+    var AddClasses = function AddClasses(elem, classList) {
+      classList.forEach(function (_className) {
+        elem.classList.add(_className);
+      });
+    };
+
+    exports.AddClasses = AddClasses;
+
+    var RemoveClasses = function RemoveClasses(elem, classList) {
+      classList.forEach(function (_className) {
+        elem.classList.remove(_className);
+      });
+    };
+
+    exports.RemoveClasses = RemoveClasses;
 
     var QueryMedia = function QueryMedia(mediaQuery) {
       var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
@@ -671,7 +681,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       // Scan for all AIO Elements & create observer for all of them
       // Multiple observers so we can individually disconnect any element that we want
       ObserveAIOElements(); // look for new observable objects 
-      // start looking for new elements after an arbitrary delay of 2 seconds
+      // delay observing newly added elements for whatever reasons after a delay of X milliseconds
 
       if (_Settings.ObserverSettings.trackMutations) {
         setTimeout(function () {
@@ -686,7 +696,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       (0, _Mutations.AddMutationListener)({
         name: 'observer_listener',
         callback: function callback(mutations) {
-          // delay the observer so the animation can be visible a bit
+          // attach observers after a light delay
           setTimeout(function () {
             return ObserveAIOElements();
           }, 10);
@@ -707,14 +717,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         var repeat = elem.hasAttribute('data-aio-repeat') || _Settings.ObserverSettings.repeat;
 
         var delay = (0, _Helpers.AttrToNum)(elem, 'data-aio-delay', _Settings.ObserverSettings.delay);
-        var offsetTop = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-top', _Settings.ObserverSettings.rootMargin.split(" ")[0]);
-        var offsetRgt = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-right', _Settings.ObserverSettings.rootMargin.split(" ")[1]);
-        var offsetBtm = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-bottom', _Settings.ObserverSettings.rootMargin.split(" ")[2]);
-        var offsetLft = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-left', _Settings.ObserverSettings.rootMargin.split(" ")[3]);
-        var rootMargin = "".concat(offsetTop, " ").concat(offsetRgt, " ").concat(offsetBtm, " ").concat(offsetLft);
+        var rootMargin = _Settings.ObserverSettings.rootMargin;
 
-        if (elem.hasAttribute("data-aio-offset")) {
-          var offsetVal = elem.getAttribute("data-aio-offset");
+        if (elem.hasAttribute('data-aio-offset')) {
+          var offsetVal = elem.getAttribute('data-aio-offset');
 
           if (offsetVal != null && offsetVal.length > 0) {
             rootMargin = offsetVal;
@@ -722,11 +728,32 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
 
         var intersected = false;
-        var classes = [];
+        var custom_entry_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-enter-class', '');
+        var entry_classlist = [_Settings.ObserverSettings.enterIntersectionClassName, custom_entry_attrVal.split(' ')];
         var aioType = elem.getAttribute(_Settings.ObserverSettings.observableAttrName);
 
         if (aioType.length > 0) {
-          classes.push("aio-".concat(aioType));
+          entry_classlist.push("aio-".concat(aioType));
+        }
+
+        entry_classlist = entry_classlist.filter(function (_class) {
+          return _class != '';
+        });
+        var custom_exit_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-exit-class', '');
+        var exit_classlist = [_Settings.ObserverSettings.exitIntersectionClassName, custom_exit_attrVal.split(' ')];
+        exit_classlist = exit_classlist.filter(function (_class) {
+          return _class != '';
+        });
+        var attributesApplied = false;
+        var lazy_attr_list = [];
+        var lazy_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-lazy-attr', null);
+
+        if (lazy_attrVal != null && lazy_attrVal.length > 10) {
+          var parsed_array = JSON.parse(lazy_attrVal);
+
+          if (Array.isArray(parsed_array)) {
+            if (parsed_array.length > 0) lazy_attr_list.push.apply(lazy_attr_list, _toConsumableArray(parsed_array));
+          }
         }
 
         var intersectionsettings = {
@@ -734,39 +761,45 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           rootMargin: rootMargin,
           threshold: _Settings.ObserverSettings.threshold
         };
-        var observer = new IntersectionObserver(function (entries, observer) {
+        var Observer = new IntersectionObserver(function (entries, _observer) {
           entries.forEach(function (entry) {
             var ratio = entry.intersectionRatio;
             var entryTimeOut = 0;
 
             if (ratio > 0) {
-              intersected = true;
-              entryTimeOut = setTimeout(function () {
-                entry.target.classList.remove(_Settings.ObserverSettings.exitIntersectionClassName);
-                entry.target.classList.add(_Settings.ObserverSettings.enterIntersectionClassName);
-                classes.forEach(function (c) {
-                  entry.target.classList.add(c);
+              intersected = true; // add custom attributes
+
+              if (!attributesApplied) {
+                attributesApplied = true;
+                lazy_attr_list.forEach(function (attr) {
+                  var key = Object.keys(attr)[0];
+                  entry.target.setAttribute(key, attr[key]);
                 });
+              } // add entry class names & remove exit class names
+
+
+              entryTimeOut = setTimeout(function () {
+                (0, _Helpers.RemoveClasses)(entry.target, exit_classlist);
+                (0, _Helpers.AddClasses)(entry.target, entry_classlist);
               }, delay);
             }
 
             if (ratio == 0 && repeat) {
-              clearTimeout(entryTimeOut);
-              entry.target.classList.remove(_Settings.ObserverSettings.enterIntersectionClassName);
-              classes.forEach(function (c) {
-                entry.target.classList.remove(c);
-              });
-              entry.target.classList.add(_Settings.ObserverSettings.exitIntersectionClassName);
+              clearTimeout(entryTimeOut); // add exit class names & remove entry class names
+
+              (0, _Helpers.RemoveClasses)(entry.target, entry_classlist);
+              (0, _Helpers.AddClasses)(entry.target, exit_classlist);
             }
 
             if (ratio == 0 && !repeat && intersected) {
-              observer.unobserve(elem);
-              observer.disconnect();
+              _observer.unobserve(elem);
+
+              _observer.disconnect();
             }
           });
         }, intersectionsettings);
-        observer.observe(elem);
-        ObserverList.push(observer);
+        Observer.observe(elem);
+        ObserverList.push(Observer);
       });
     };
 
@@ -795,7 +828,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         });
       }, defaultOptions);
 
-      if (typeof target == "string" && target.trim().length > 0) {
+      if (typeof target == 'string' && target.trim().length > 0) {
         document.querySelectorAll(target).forEach(function (elem) {
           return observer.observe(elem);
         });
@@ -810,7 +843,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           return observer.observe(elem);
         });
       } else {
-        console.error("Target element: \"".concat(target, "\" not found"));
+        console.error("Target element: '".concat(target, "' not found"));
       }
     };
 
@@ -1055,24 +1088,22 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   9: [function (require, module, exports) {
     "use strict";
 
-    var _DefaultObserverSetti;
-
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
     exports.OverrideDefaultAnimationSettings = exports.AnimationSettings = exports.OverrideDefaultObserverSettings = exports.ObserverSettings = void 0;
-    var DefaultObserverSettings = (_DefaultObserverSetti = {
+    var DefaultObserverSettings = {
       delay: 0,
-      offset: 0,
-      mode: 'relative',
       observableAttrName: "data-aiobserve",
       enterIntersectionClassName: "aio-enter",
       exitIntersectionClassName: "aio-exit",
       repeat: false,
-      threshold: 0,
+      trackMutations: true,
+      mutationWatchDelay: 0,
       root: null,
-      rootMargin: '0px 0px 0px 0px'
-    }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _defineProperty(_DefaultObserverSetti, "mutationWatchDelay", 2000), _DefaultObserverSetti);
+      rootMargin: '0px 0px 0px 0px',
+      threshold: 0
+    };
     var ObserverSettings = null;
     exports.ObserverSettings = ObserverSettings;
 
@@ -1083,10 +1114,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
     exports.OverrideDefaultObserverSettings = OverrideDefaultObserverSettings;
     var DefaultAnimationSettings = {
-      gridHelper: false,
-      trackMutations: true,
+      mode: 'relative',
       fps: null,
-      deactivateBelow: 1025
+      deactivateBelow: 1025,
+      trackMutations: true,
+      mutationWatchDelay: 0,
+      gridHelper: false
     };
     var AnimationSettings = null;
     exports.AnimationSettings = AnimationSettings;

@@ -1,9 +1,3 @@
-/**
- * https://github.com/rohangaikwad/animate-io
- * Author: Rohan gaikwad
- * Generated on Saturday, September 26th 2020, 10:53:45 pm
- */
-
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
@@ -323,7 +317,7 @@ const InitAnimations = () => {
   // start looking for new elements after an arbitrary delay of 2 seconds
 
   if (_Settings.AnimationSettings.trackMutations) {
-    setTimeout(() => AddNewElementsToStateMachine(), 2000);
+    setTimeout(() => AddNewElementsToStateMachine(), _Settings.AnimationSettings.mutationWatchDelay);
   } // show a helper grid and markers for where an animation will start and end
 
 
@@ -405,7 +399,7 @@ exports.SMO_ID_ATTR_NAME = SMO_ID_ATTR_NAME;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.QueryMedia = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
+exports.QueryMedia = exports.RemoveClasses = exports.AddClasses = exports.DrawGrid = exports.AttrToNum = exports.GetAttrVal = void 0;
 
 const GetAttrVal = (elem, attr, defaultValue) => {
   let val = defaultValue;
@@ -447,6 +441,22 @@ const DrawGrid = () => {
 };
 
 exports.DrawGrid = DrawGrid;
+
+const AddClasses = (elem, classList) => {
+  classList.forEach(_className => {
+    elem.classList.add(_className);
+  });
+};
+
+exports.AddClasses = AddClasses;
+
+const RemoveClasses = (elem, classList) => {
+  classList.forEach(_className => {
+    elem.classList.remove(_className);
+  });
+};
+
+exports.RemoveClasses = RemoveClasses;
 
 const QueryMedia = (mediaQuery, callback = null) => {
   let query = window.matchMedia(mediaQuery);
@@ -572,7 +582,7 @@ const InitAIObservers = () => {
   // Scan for all AIO Elements & create observer for all of them
   // Multiple observers so we can individually disconnect any element that we want
   ObserveAIOElements(); // look for new observable objects 
-  // start looking for new elements after an arbitrary delay of 2 seconds
+  // delay observing newly added elements for whatever reasons after a delay of X milliseconds
 
   if (_Settings.ObserverSettings.trackMutations) {
     setTimeout(() => AddNewAIOElements(), _Settings.ObserverSettings.mutationWatchDelay);
@@ -585,7 +595,7 @@ const AddNewAIOElements = () => {
   (0, _Mutations.AddMutationListener)({
     name: 'observer_listener',
     callback: mutations => {
-      // delay the observer so the animation can be visible a bit
+      // attach observers after a light delay
       setTimeout(() => ObserveAIOElements(), 10);
     }
   });
@@ -602,14 +612,12 @@ const ObserveAIOElements = () => {
     let repeat = elem.hasAttribute('data-aio-repeat') || _Settings.ObserverSettings.repeat;
 
     let delay = (0, _Helpers.AttrToNum)(elem, 'data-aio-delay', _Settings.ObserverSettings.delay);
-    let offsetTop = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-top', _Settings.ObserverSettings.rootMargin.split(" ")[0]);
-    let offsetRgt = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-right', _Settings.ObserverSettings.rootMargin.split(" ")[1]);
-    let offsetBtm = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-bottom', _Settings.ObserverSettings.rootMargin.split(" ")[2]);
-    let offsetLft = (0, _Helpers.GetAttrVal)(elem, 'data-aio-offset-left', _Settings.ObserverSettings.rootMargin.split(" ")[3]);
-    let rootMargin = `${offsetTop} ${offsetRgt} ${offsetBtm} ${offsetLft}`;
+    let {
+      rootMargin
+    } = _Settings.ObserverSettings;
 
-    if (elem.hasAttribute("data-aio-offset")) {
-      let offsetVal = elem.getAttribute("data-aio-offset");
+    if (elem.hasAttribute('data-aio-offset')) {
+      let offsetVal = elem.getAttribute('data-aio-offset');
 
       if (offsetVal != null && offsetVal.length > 0) {
         rootMargin = offsetVal;
@@ -617,11 +625,28 @@ const ObserveAIOElements = () => {
     }
 
     let intersected = false;
-    let classes = [];
+    let custom_entry_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-enter-class', '');
+    let entry_classlist = [_Settings.ObserverSettings.enterIntersectionClassName, custom_entry_attrVal.split(' ')];
     let aioType = elem.getAttribute(_Settings.ObserverSettings.observableAttrName);
 
     if (aioType.length > 0) {
-      classes.push(`aio-${aioType}`);
+      entry_classlist.push(`aio-${aioType}`);
+    }
+
+    entry_classlist = entry_classlist.filter(_class => _class != '');
+    let custom_exit_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-exit-class', '');
+    let exit_classlist = [_Settings.ObserverSettings.exitIntersectionClassName, custom_exit_attrVal.split(' ')];
+    exit_classlist = exit_classlist.filter(_class => _class != '');
+    let attributesApplied = false;
+    let lazy_attr_list = [];
+    let lazy_attrVal = (0, _Helpers.GetAttrVal)(elem, 'data-aio-lazy-attr', null);
+
+    if (lazy_attrVal != null && lazy_attrVal.length > 10) {
+      let parsed_array = JSON.parse(lazy_attrVal);
+
+      if (Array.isArray(parsed_array)) {
+        if (parsed_array.length > 0) lazy_attr_list.push(...parsed_array);
+      }
     }
 
     let intersectionsettings = {
@@ -629,39 +654,45 @@ const ObserveAIOElements = () => {
       rootMargin: rootMargin,
       threshold: _Settings.ObserverSettings.threshold
     };
-    let observer = new IntersectionObserver((entries, observer) => {
+    let Observer = new IntersectionObserver((entries, _observer) => {
       entries.forEach(entry => {
         let ratio = entry.intersectionRatio;
         let entryTimeOut = 0;
 
         if (ratio > 0) {
-          intersected = true;
-          entryTimeOut = setTimeout(() => {
-            entry.target.classList.remove(_Settings.ObserverSettings.exitIntersectionClassName);
-            entry.target.classList.add(_Settings.ObserverSettings.enterIntersectionClassName);
-            classes.forEach(c => {
-              entry.target.classList.add(c);
+          intersected = true; // add custom attributes
+
+          if (!attributesApplied) {
+            attributesApplied = true;
+            lazy_attr_list.forEach(attr => {
+              let key = Object.keys(attr)[0];
+              entry.target.setAttribute(key, attr[key]);
             });
+          } // add entry class names & remove exit class names
+
+
+          entryTimeOut = setTimeout(() => {
+            (0, _Helpers.RemoveClasses)(entry.target, exit_classlist);
+            (0, _Helpers.AddClasses)(entry.target, entry_classlist);
           }, delay);
         }
 
         if (ratio == 0 && repeat) {
-          clearTimeout(entryTimeOut);
-          entry.target.classList.remove(_Settings.ObserverSettings.enterIntersectionClassName);
-          classes.forEach(c => {
-            entry.target.classList.remove(c);
-          });
-          entry.target.classList.add(_Settings.ObserverSettings.exitIntersectionClassName);
+          clearTimeout(entryTimeOut); // add exit class names & remove entry class names
+
+          (0, _Helpers.RemoveClasses)(entry.target, entry_classlist);
+          (0, _Helpers.AddClasses)(entry.target, exit_classlist);
         }
 
         if (ratio == 0 && !repeat && intersected) {
-          observer.unobserve(elem);
-          observer.disconnect();
+          _observer.unobserve(elem);
+
+          _observer.disconnect();
         }
       });
     }, intersectionsettings);
-    observer.observe(elem);
-    ObserverList.push(observer);
+    Observer.observe(elem);
+    ObserverList.push(Observer);
   });
 };
 
@@ -690,7 +721,7 @@ const ObserveElements = (target, options, callback, repeat) => {
     });
   }, defaultOptions);
 
-  if (typeof target == "string" && target.trim().length > 0) {
+  if (typeof target == 'string' && target.trim().length > 0) {
     document.querySelectorAll(target).forEach(elem => observer.observe(elem));
   } else if (target instanceof Element) {
     observer.observe(target);
@@ -699,7 +730,7 @@ const ObserveElements = (target, options, callback, repeat) => {
   } else if (HTMLCollection.prototype.isPrototypeOf(target)) {
     [...target].forEach(elem => observer.observe(elem));
   } else {
-    console.error(`Target element: "${target}" not found`);
+    console.error(`Target element: '${target}' not found`);
   }
 };
 
@@ -937,18 +968,15 @@ Object.defineProperty(exports, "__esModule", {
 exports.OverrideDefaultAnimationSettings = exports.AnimationSettings = exports.OverrideDefaultObserverSettings = exports.ObserverSettings = void 0;
 const DefaultObserverSettings = {
   delay: 0,
-  offset: 0,
-  mode: 'relative',
   observableAttrName: "data-aiobserve",
   enterIntersectionClassName: "aio-enter",
   exitIntersectionClassName: "aio-exit",
   repeat: false,
-  threshold: 0,
+  trackMutations: true,
+  mutationWatchDelay: 0,
   root: null,
   rootMargin: '0px 0px 0px 0px',
-  threshold: 0,
-  trackMutations: true,
-  mutationWatchDelay: 2000
+  threshold: 0
 };
 let ObserverSettings = null;
 exports.ObserverSettings = ObserverSettings;
@@ -962,10 +990,12 @@ const OverrideDefaultObserverSettings = _settings => {
 
 exports.OverrideDefaultObserverSettings = OverrideDefaultObserverSettings;
 const DefaultAnimationSettings = {
-  gridHelper: false,
-  trackMutations: true,
+  mode: 'relative',
   fps: null,
-  deactivateBelow: 1025
+  deactivateBelow: 1025,
+  trackMutations: true,
+  mutationWatchDelay: 0,
+  gridHelper: false
 };
 let AnimationSettings = null;
 exports.AnimationSettings = AnimationSettings;

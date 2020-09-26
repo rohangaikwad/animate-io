@@ -30,6 +30,18 @@ export const DrawGrid = () => {
     document.body.appendChild(gridContainer);
 }
 
+export const AddClasses = (elem, classList) => {
+    classList.forEach(_className => {
+        elem.classList.add(_className);
+    });
+}
+
+export const RemoveClasses = (elem, classList) => {
+    classList.forEach(_className => {
+        elem.classList.remove(_className);
+    });
+}
+
 
 export const QueryMedia = (mediaQuery, callback = null) => {
     let query = window.matchMedia(mediaQuery);

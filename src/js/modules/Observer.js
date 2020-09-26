@@ -1,5 +1,5 @@
 import { ObserverSettings } from './Settings';
-import { AttrToNum, GetAttrVal } from './Helpers';
+import { AddClasses, AttrToNum, GetAttrVal, RemoveClasses } from './Helpers';
 import { AddMutationListener } from './Mutations';
 
 let ObserverList = [];
@@ -11,9 +11,9 @@ export const InitAIObservers = () => {
     // Multiple observers so we can individually disconnect any element that we want
     ObserveAIOElements();
 
-    
+
     // look for new observable objects 
-    // start looking for new elements after an arbitrary delay of 2 seconds
+    // delay observing newly added elements for whatever reasons after a delay of X milliseconds
     if (ObserverSettings.trackMutations) {
         setTimeout(() => AddNewAIOElements(), ObserverSettings.mutationWatchDelay);
     }
@@ -23,7 +23,7 @@ const AddNewAIOElements = () => {
     AddMutationListener({
         name: 'observer_listener',
         callback: (mutations) => {
-            // delay the observer so the animation can be visible a bit
+            // attach observers after a light delay
             setTimeout(() => ObserveAIOElements(), 10);
         }
     })
@@ -41,23 +41,35 @@ const ObserveAIOElements = () => {
 
         let repeat = elem.hasAttribute('data-aio-repeat') || ObserverSettings.repeat;
         let delay = AttrToNum(elem, 'data-aio-delay', ObserverSettings.delay);
-        let offsetTop = GetAttrVal(elem, 'data-aio-offset-top', ObserverSettings.rootMargin.split(" ")[0]);
-        let offsetRgt = GetAttrVal(elem, 'data-aio-offset-right', ObserverSettings.rootMargin.split(" ")[1]);
-        let offsetBtm = GetAttrVal(elem, 'data-aio-offset-bottom', ObserverSettings.rootMargin.split(" ")[2]);
-        let offsetLft = GetAttrVal(elem, 'data-aio-offset-left', ObserverSettings.rootMargin.split(" ")[3]);
-        let rootMargin = `${offsetTop} ${offsetRgt} ${offsetBtm} ${offsetLft}`;
-        if (elem.hasAttribute("data-aio-offset")) {
-            let offsetVal = elem.getAttribute("data-aio-offset");
+        let { rootMargin } = ObserverSettings;
+        if (elem.hasAttribute('data-aio-offset')) {
+            let offsetVal = elem.getAttribute('data-aio-offset');
             if (offsetVal != null && offsetVal.length > 0) {
                 rootMargin = offsetVal;
             }
         }
         let intersected = false;
 
-        let classes = [];
+        let custom_entry_attrVal = GetAttrVal(elem, 'data-aio-enter-class', '');
+        let entry_classlist = [ObserverSettings.enterIntersectionClassName, custom_entry_attrVal.split(' ')];
         let aioType = elem.getAttribute(ObserverSettings.observableAttrName);
         if (aioType.length > 0) {
-            classes.push(`aio-${aioType}`);
+            entry_classlist.push(`aio-${aioType}`);
+        }
+        entry_classlist = entry_classlist.filter(_class => _class != '');
+
+        let custom_exit_attrVal = GetAttrVal(elem, 'data-aio-exit-class', '');
+        let exit_classlist = [ObserverSettings.exitIntersectionClassName, custom_exit_attrVal.split(' ')];
+        exit_classlist = exit_classlist.filter(_class => _class != '');
+
+        let attributesApplied = false;
+        let lazy_attr_list = [];
+        let lazy_attrVal = GetAttrVal(elem, 'data-aio-lazy-attr', null);
+        if (lazy_attrVal != null && lazy_attrVal.length > 10) {
+            let parsed_array = JSON.parse(lazy_attrVal);
+            if (Array.isArray(parsed_array)) {
+                if (parsed_array.length > 0) lazy_attr_list.push(...parsed_array);
+            }
         }
 
         let intersectionsettings = {
@@ -66,40 +78,47 @@ const ObserveAIOElements = () => {
             threshold: ObserverSettings.threshold
         }
 
-        let observer = new IntersectionObserver((entries, observer) => {
+        let Observer = new IntersectionObserver((entries, _observer) => {
             entries.forEach(entry => {
                 let ratio = entry.intersectionRatio;
                 let entryTimeOut = 0;
 
                 if (ratio > 0) {
                     intersected = true;
-                    entryTimeOut = setTimeout(() => {
-                        entry.target.classList.remove(ObserverSettings.exitIntersectionClassName);
-                        entry.target.classList.add(ObserverSettings.enterIntersectionClassName);
-                        classes.forEach(c => {
-                            entry.target.classList.add(c);
+
+                    // add custom attributes
+                    if (!attributesApplied) {
+                        attributesApplied = true;
+                        lazy_attr_list.forEach(attr => {
+                            let key = Object.keys(attr)[0];
+                            entry.target.setAttribute(key, attr[key]);
                         });
+                    }
+
+                    // add entry class names & remove exit class names
+                    entryTimeOut = setTimeout(() => {
+                        RemoveClasses(entry.target, exit_classlist);
+                        AddClasses(entry.target, entry_classlist);
                     }, delay);
                 }
 
                 if (ratio == 0 && repeat) {
                     clearTimeout(entryTimeOut);
-                    entry.target.classList.remove(ObserverSettings.enterIntersectionClassName);
-                    classes.forEach(c => {
-                        entry.target.classList.remove(c);
-                    });
-                    entry.target.classList.add(ObserverSettings.exitIntersectionClassName);
+
+                    // add exit class names & remove entry class names
+                    RemoveClasses(entry.target, entry_classlist);
+                    AddClasses(entry.target, exit_classlist);
                 }
 
                 if (ratio == 0 && !repeat && intersected) {
-                    observer.unobserve(elem);
-                    observer.disconnect();
+                    _observer.unobserve(elem);
+                    _observer.disconnect();
                 }
             })
         }, intersectionsettings);
 
-        observer.observe(elem);
-        ObserverList.push(observer);
+        Observer.observe(elem);
+        ObserverList.push(Observer);
     });
 }
 
@@ -127,7 +146,7 @@ const ObserveElements = (target, options, callback, repeat) => {
         })
     }, defaultOptions);
 
-    if (typeof target == "string" && target.trim().length > 0) {
+    if (typeof target == 'string' && target.trim().length > 0) {
         document.querySelectorAll(target).forEach(elem => observer.observe(elem));
     } else if (target instanceof Element) {
         observer.observe(target);
@@ -136,7 +155,7 @@ const ObserveElements = (target, options, callback, repeat) => {
     } else if (HTMLCollection.prototype.isPrototypeOf(target)) {
         [...target].forEach(elem => observer.observe(elem));
     } else {
-        console.error(`Target element: "${target}" not found`);
+        console.error(`Target element: '${target}' not found`);
     }
 }
 

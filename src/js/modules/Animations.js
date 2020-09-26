@@ -32,7 +32,7 @@ export const InitAnimations = () => {
     // look for new animateable objects with the signature data-aio-<int>
     // start looking for new elements after an arbitrary delay of 2 seconds
     if (AnimationSettings.trackMutations) {
-        setTimeout(() => AddNewElementsToStateMachine(), 2000);
+        setTimeout(() => AddNewElementsToStateMachine(), AnimationSettings.mutationWatchDelay);
     }
 
     // show a helper grid and markers for where an animation will start and end

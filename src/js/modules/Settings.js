@@ -1,17 +1,14 @@
 const DefaultObserverSettings = {
     delay: 0,
-    offset: 0,
-    mode: 'relative',
     observableAttrName: "data-aiobserve",
     enterIntersectionClassName: "aio-enter",
     exitIntersectionClassName: "aio-exit",
     repeat: false,
-    threshold: 0,
+    trackMutations: true,
+    mutationWatchDelay: 0,
     root: null,
     rootMargin: '0px 0px 0px 0px',
-    threshold: 0,
-    trackMutations: true,
-    mutationWatchDelay: 2000
+    threshold: 0
 }
 
 export let ObserverSettings = null;
@@ -23,10 +20,12 @@ export const OverrideDefaultObserverSettings = (_settings) => {
 
 
 const DefaultAnimationSettings = {
-    gridHelper: false,
-    trackMutations: true,
+    mode: 'relative',
     fps: null,
-    deactivateBelow: 1025
+    deactivateBelow: 1025,
+    trackMutations: true,
+    mutationWatchDelay: 0,
+    gridHelper: false
 }
 
 export let AnimationSettings = null;
