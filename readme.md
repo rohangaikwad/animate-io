@@ -90,11 +90,11 @@ AnimateIO.InitObservers();
 
 attributeName|required|description
 -|-|-
-`data-aiobserve` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|Required|This attribute allows the element to be tracked using the IntersectionObserver and perform actions when it scrolls in/out of the viewport.
+`data-aiobserve`|Required|This attribute allows the element to be tracked using the [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) and perform actions when it scrolls in/out of the viewport.
 &nbsp;|_Example_|`<div data-aiobserve></div>`
-`data-aio-repeat`|Optional|If this attribute is not added the element will stop being observed once it becomes visible in the viewport. This attribute will override the `options.repeat` property declared in `AnimateIO.InitObservers(option)`
+`data-aio-repeat`|Optional|If this attribute is not added the element will stop being observed once it becomes visible in the viewport. This attribute will override the `options.repeat` property declared in [`AnimateIO.InitObservers(option)`](#animateioinitobserversoptions)
 &nbsp;|_Example_|`<div data-aio-repeat></div>`
-`data-aio-delay`|Optional|Time delay(milliseconds) in performing actions after the target scrolls in and out of the viewport.
+`data-aio-delay`|Optional|Time delay(milliseconds) in performing actions after the target scrolls in and out of the viewport. This attribute will override the `options.delay` property declared in [`AnimateIO.InitObservers(option)`](#animateioinitobserversoptions)
 &nbsp;|_Example_|`<div data-aio-delay="1000"></div>`
 `data-aio-enter-class`|Optional|Adds a custom class to the target element when it becomes visible in the viewport
 &nbsp;|_Example_|`<div data-aio-enter-class="customVisibleClass"></div>`
