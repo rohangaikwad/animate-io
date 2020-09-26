@@ -8,24 +8,24 @@ Adding Animate IO to your website is a straight forward process.
 Grab the below mentioned script files from the dist folder and include them in the HTML file as follows
 > Adding AnimateIO.js to Modern browsers (Chrome, Firefox, Edge, Safari)
 ```html
-<script src="js/animate-io.min.js"></script>
+<script src="animate-io.min.js"></script>
 ```
 > Adding AnimateIO.js to Legacy browsers (IE 11)
 ```html
 <!-- Either include the following polyfill bundle from the dist folder -->
-<script src="js/polyfill.js"></script>
+<script src="polyfill.min.js"></script>
 
 <!-- Or  include the necessary polyfills from polyfill.io -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=Array.from,Number.isNaN,Array.prototype.forEach,IntersectionObserver,Object.entries"></script>
 
 <!-- AnimateIO library transformed using Babel -->
-<script src="js/animate-io-es2015.min.js"></script>
+<script src="animate-io-es2015.min.js"></script>
 ```
 
 ### Step 2: Add the Stylesheet tags (Optional)
 Grab animate-io.min.css from the dist folder and include it in the HTML file as follows
 ```html
-<link rel="stylesheet" href="css/animate-io.min.css">
+<link rel="stylesheet" href="animate-io.min.css">
 ```
 
 ### Step 3: Add attributes on elements that you want to animate or observe if they are visible in the viewport
