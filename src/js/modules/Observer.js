@@ -61,10 +61,12 @@ const ObserveAIOElements = () => {
         }
 
         let intersectionsettings = {
-            root: document.documentElement,
+            root: ObserverSettings.root,
             rootMargin: rootMargin,
             threshold: ObserverSettings.threshold
         }
+
+        console.log(intersectionsettings)
 
         let observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -105,8 +107,8 @@ const ObserveAIOElements = () => {
 
 const ObserveElements = (target, options, callback, repeat) => {
     let defaultOptions = {
-        root: document.documentElement,
-        rootMargin: 0,
+        root: null,
+        rootMargin: '0px',
         threshold: 0,
         ...options
     }

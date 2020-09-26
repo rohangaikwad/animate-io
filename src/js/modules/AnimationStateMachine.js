@@ -164,7 +164,7 @@ let _fillPropForFrame = function (frame, propList) {
 
 let AnimationObserver = null;
 export const InitiateAnimationObserver = () => {
-    let observerSettings = { root: document.documentElement, rootMargin: '0px', threshold: 0 }
+    let observerSettings = { root: null, rootMargin: '0px', threshold: 0 }
     // init observer
     AnimationObserver = new IntersectionObserver((entries, observer) => {
         //console.log(entries)

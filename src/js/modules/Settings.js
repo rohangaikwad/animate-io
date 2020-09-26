@@ -7,7 +7,7 @@ const DefaultObserverSettings = {
     exitIntersectionClassName: "aio-exit",
     repeat: false,
     threshold: 0,
-    root: document,
+    root: null,
     rootMargin: '0px 0px 0px 0px',
     threshold: 0,
     trackMutations: true

@@ -203,7 +203,7 @@ let AnimationObserver = null;
 
 const InitiateAnimationObserver = () => {
   let observerSettings = {
-    root: document.documentElement,
+    root: null,
     rootMargin: '0px',
     threshold: 0
   }; // init observer
@@ -619,10 +619,11 @@ const ObserveAIOElements = () => {
     }
 
     let intersectionsettings = {
-      root: document.documentElement,
+      root: _Settings.ObserverSettings.root,
       rootMargin: rootMargin,
       threshold: _Settings.ObserverSettings.threshold
     };
+    console.log(intersectionsettings);
     let observer = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
         let ratio = entry.intersectionRatio;
@@ -661,8 +662,8 @@ const ObserveAIOElements = () => {
 
 const ObserveElements = (target, options, callback, repeat) => {
   let defaultOptions = {
-    root: document.documentElement,
-    rootMargin: 0,
+    root: null,
+    rootMargin: '0px',
     threshold: 0,
     ...options
   };
@@ -938,7 +939,7 @@ const DefaultObserverSettings = {
   exitIntersectionClassName: "aio-exit",
   repeat: false,
   threshold: 0,
-  root: document,
+  root: null,
   rootMargin: '0px 0px 0px 0px',
   threshold: 0,
   trackMutations: true

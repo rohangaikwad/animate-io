@@ -275,7 +275,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
     var InitiateAnimationObserver = function InitiateAnimationObserver() {
       var observerSettings = {
-        root: document.documentElement,
+        root: null,
         rootMargin: '0px',
         threshold: 0
       }; // init observer
@@ -724,10 +724,11 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
 
         var intersectionsettings = {
-          root: document.documentElement,
+          root: _Settings.ObserverSettings.root,
           rootMargin: rootMargin,
           threshold: _Settings.ObserverSettings.threshold
         };
+        console.log(intersectionsettings);
         var observer = new IntersectionObserver(function (entries, observer) {
           entries.forEach(function (entry) {
             var ratio = entry.intersectionRatio;
@@ -766,8 +767,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
     var ObserveElements = function ObserveElements(target, options, callback, repeat) {
       var defaultOptions = _objectSpread({
-        root: document.documentElement,
-        rootMargin: 0,
+        root: null,
+        rootMargin: '0px',
         threshold: 0
       }, options);
 
@@ -1064,7 +1065,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       exitIntersectionClassName: "aio-exit",
       repeat: false,
       threshold: 0,
-      root: document,
+      root: null,
       rootMargin: '0px 0px 0px 0px'
     }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _DefaultObserverSetti);
     var ObserverSettings = null;
