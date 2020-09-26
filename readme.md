@@ -85,23 +85,23 @@ AnimateIO.InitObservers();
 
 ## Documentation
 ### Methods
-##### `AnimateIO.InitObservers(options)`
+#### `AnimateIO.InitObservers(options)`
 >Start observing all the HTML elements that have the attribute `data-aiobserve`. Add or remove custom classes as defined in the HTML Element by using the attribute `data-aiobserve`, `data-aio-entry-class`, `data-aio-exit-class`. Lazily add attributes defined in the `data-aio-lazy-attr` attribute as a JSON stringified array, to the HTML Element when it becomes visible in the viewport.
 
 parameter|type|description
 -|-|-
 `options`|object [ObserverOptions](#observeroptions)|[Optional] Change default behaviour by passing arguments via the `options` object
 
-##### `AnimateIO.StopObservers()`
+#### `AnimateIO.StopObservers()`
 >Stop observing all the HTML elements that have the attribute `data-aiobserve` 
 
-##### `AnimateIO.RestartObservers()`
+#### `AnimateIO.RestartObservers()`
 >Restart observing all the HTML elements that have the attribute `data-aiobserve` 
 
-##### `AnimateIO.DestroyObservers()`
+#### `AnimateIO.DestroyObservers()`
 >Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. 
 
-##### `AnimateIO.Observe(target, options, callback)`
+#### `AnimateIO.Observe(target, options, callback)`
 >This method is similar to [AnimateIO.InitObservers()](#as) but is used to manually observe the target (`HTMLElement`/`NodeList`/`HTMLCollection`) when it becomes visible in the viewport. An IntersectionObserver is attached to the provided target and the callback gets executed whenever the target becomes visible in the viewport.
 
 parameter|type|description
@@ -110,24 +110,24 @@ parameter|type|description
 `options`|[`IntersectionObserverInit`](https://www.w3.org/TR/intersection-observer/#dictdef-intersectionobserverinit) dictionary|The options object passed into the IntersectionObserver() constructor let you control the circumstances under which the observer's callback is invoked. It has the following fields: `root`, `rootMargin`, `threshold`
 `callback`|function|The function passed in the `callback` parameter, gets executed when the target scrolls in & out of the viewport.
 
-##### `AnimateIO.ObserveOnce(target, options, callback)`
+#### `AnimateIO.ObserveOnce(target, options, callback)`
 >This method is similar to [AnimateIO.Observe()](#as) but the callback is executed only once. We disconnect the IntersectionObserver once the target becomes visible in the viewport and stop observing it further.
 
-##### `AnimateIO.Animate(options)`
+#### `AnimateIO.Animate(options)`
 >Start animating CSS properties on all the HTML elements that have the attribute `data-aio-<number>`. 
 
 parameter|type|description
 -|-|-
 `options`|object [AnimationOptions](#animationoptions)|[Optional] Change default behaviour by passing arguments via the `options` object
 
-##### `AnimateIO.AnimateEnd()`
+#### `AnimateIO.AnimateEnd()`
 >Stops animations/transformation all the HTML elements that have the attribute `data-aio-<number>`
 
-##### `AnimateIO.AnimateRestart()`
+#### `AnimateIO.AnimateRestart()`
 >Restarts animations/transformation all the HTML elements that have the attribute `data-aio-<number>`
 
 ### Options
-##### `ObserverOptions`
+#### `ObserverOptions`
 >ObserverOptions object consists of the below mentioned properties and values.
 
 propertyName|defaultValue|description
@@ -139,7 +139,7 @@ propertyName|defaultValue|description
 `trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
 `mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
 
-##### `AnimationOptions`
+#### `AnimationOptions`
 >AnimationOptions object consists of the below mentioned properties and values.
 
 propertyName|defaultValue|description
