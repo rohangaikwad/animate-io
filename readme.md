@@ -1,6 +1,10 @@
 # AnimateIO
 Animate IO is a JavaScript library which allows you to perform animations based on scroll position & the visibility of an element, using IntersectionObserver.
 
+## TOC
+1. Getting Started 
+2. [Links](#links)
+
 ## Getting Started
 Adding Animate IO to your website is a straight forward process.
 
@@ -60,7 +64,9 @@ AnimateIO.InitObservers();
 ```
 
 
-## Helpful links
+## Links
 https://polyfill.io/v3/url-builder/
+
 https://clontz.org/blog/2014/05/08/git-subtree-push-for-deployment/
+
 https://stackoverflow.com/questions/12644855/how-do-i-reset-a-heroku-git-repository-to-its-initial-state/13403588#13403588
