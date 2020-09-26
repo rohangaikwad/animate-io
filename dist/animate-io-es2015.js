@@ -728,7 +728,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           rootMargin: rootMargin,
           threshold: _Settings.ObserverSettings.threshold
         };
-        console.log(intersectionsettings);
         var observer = new IntersectionObserver(function (entries, observer) {
           entries.forEach(function (entry) {
             var ratio = entry.intersectionRatio;

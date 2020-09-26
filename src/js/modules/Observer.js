@@ -66,8 +66,6 @@ const ObserveAIOElements = () => {
             threshold: ObserverSettings.threshold
         }
 
-        console.log(intersectionsettings)
-
         let observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 let ratio = entry.intersectionRatio;
