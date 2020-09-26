@@ -16,7 +16,8 @@ Grab the below mentioned script files from the dist folder and include them in t
 <script src="polyfill.min.js"></script>
 
 <!-- Or  include the necessary polyfills from polyfill.io -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=Array.from,Number.isNaN,Array.prototype.forEach,IntersectionObserver,Object.entries"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=Array.from,Number.isNaN,
+Array.prototype.forEach,IntersectionObserver,Object.entries"></script>
 
 <!-- AnimateIO library transformed using Babel -->
 <script src="animate-io-es2015.min.js"></script>
@@ -48,7 +49,8 @@ A class called `aio-exit` gets added to the element when it scrolls out of the v
 
 ### Step 4: Initialize AnimateIO
 ```js
-// a. Initialize AnimateIO to start executing animation on all the valid elements where you have added the attribute `data-aio-<number>`
+// a. Initialize AnimateIO to start executing animation on all the valid elements
+// where you have added the attribute `data-aio-<number>`
 // Only the elements with the attribute signature 'data-aio-<number>' will be animated
 AnimateIO.Animate();
 
