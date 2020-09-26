@@ -2,11 +2,21 @@
 Animate IO is a JavaScript library which allows you to perform animations based on scroll position & the visibility of an element, using IntersectionObserver.
 
 ## TOC
+1. [Features](#features)
 1. [Getting Started](#getting-started)
     1. [Step 1: Add the Script tags](#step-1-add-the-script-tags)
     1. [Step 2: Add the Stylesheet tags](#step-2-add-the-stylesheet-tags-optional) (Optional)
     1. [Step 2: Add HTML attributes](#step-2-add-the-stylesheet-tags-optional)
     1. [Step 4: Initialize AnimateIO](#step-4-initialize-animateio)
+---
+
+
+## Features
+  1. Observe when a desired HTML Element scrolls in & out of the viewport. 
+  1. Add & remove user defined class names from a HTML Element as it scrolls in & out of the viewport.
+  1. Lazily add custom attributes once the HTML Element becomes visible in the viewport.
+  1. Transform CSS properties on page scroll like parallax effects.
+---
 
 ## Getting Started
 Adding Animate IO to your website is a straight forward process.
