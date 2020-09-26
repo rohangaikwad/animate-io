@@ -670,7 +670,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       if (_Settings.ObserverSettings.trackMutations) {
         setTimeout(function () {
           return AddNewAIOElements();
-        }, 2000);
+        }, _Settings.ObserverSettings.mutationWatchDelay);
       }
     };
 
@@ -1066,7 +1066,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       threshold: 0,
       root: null,
       rootMargin: '0px 0px 0px 0px'
-    }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _DefaultObserverSetti);
+    }, _defineProperty(_DefaultObserverSetti, "threshold", 0), _defineProperty(_DefaultObserverSetti, "trackMutations", true), _defineProperty(_DefaultObserverSetti, "mutationWatchDelay", 2000), _DefaultObserverSetti);
     var ObserverSettings = null;
     exports.ObserverSettings = ObserverSettings;
 
