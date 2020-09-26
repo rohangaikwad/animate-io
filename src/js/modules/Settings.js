@@ -10,7 +10,8 @@ const DefaultObserverSettings = {
     root: null,
     rootMargin: '0px 0px 0px 0px',
     threshold: 0,
-    trackMutations: true
+    trackMutations: true,
+    mutationWatchDelay: 2000
 }
 
 export let ObserverSettings = null;

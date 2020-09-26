@@ -15,7 +15,7 @@ export const InitAIObservers = () => {
     // look for new observable objects 
     // start looking for new elements after an arbitrary delay of 2 seconds
     if (ObserverSettings.trackMutations) {
-        setTimeout(() => AddNewAIOElements(), 2000);
+        setTimeout(() => AddNewAIOElements(), ObserverSettings.mutationWatchDelay);
     }
 }
 
