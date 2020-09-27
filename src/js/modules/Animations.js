@@ -11,9 +11,9 @@ export const InitAnimations = () => {
     }
 
     // Check if browser dimensions are correct
-    let canInitialize = QueryMedia(`(min-width: ${AnimationSettings.deactivateBelow}px)`);
+    let canInitialize = QueryMedia(AnimationSettings.activeRange);
     if (!canInitialize) {
-        console.log(`AnimateIO.Animate() can't initialize since the screen width is less than ${AnimationSettings.deactivateBelow}`);
+        console.log(`AnimateIO.Animate() can't initialize since the screen width is outside the range: ${AnimationSettings.activeRange}`);
         return;
     }
 
@@ -58,21 +58,21 @@ const AddNewElementsToStateMachine = () => {
 
 
 const WatchBrowserResize = () => {
-    QueryMedia(`(min-width: ${AnimationSettings.deactivateBelow}px)`, (response) => {
+    QueryMedia(AnimationSettings.activeRange, (response) => {
         
         if(response.matches) {
             // Start animations if not already initialized
             if(!AnimationsInitialized) {
                 if (response.remove != null) {
                     response.remove();
-                    console.log(`Restarting AnimateIO.Animate as browser width is >= ${AnimationSettings.deactivateBelow}px`);
+                    console.log(`Restarting AnimateIO.Animate as browser width is inside the acceptable range: ${AnimationSettings.activeRange}px`);
                     InitAnimations();
                 }
             }            
         } else {
             // stop the animations if browser window shrinks below defined width
             if(AnimationsInitialized) {
-                console.log(`Stopping AnimateIO.Animate as browser width is < ${AnimationSettings.deactivateBelow}px`);
+                console.log(`Stopping AnimateIO.Animate as browser width is outside the range: ${AnimationSettings.activeRange}`);
                 KillAnimateInstance();
             }
         }

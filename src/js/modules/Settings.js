@@ -22,7 +22,7 @@ export const OverrideDefaultObserverSettings = (_settings) => {
 const DefaultAnimationSettings = {
     mode: 'relative',
     fps: null,
-    deactivateBelow: 1025,
+    activeRange: '(min-width: 1025px)',
     trackMutations: true,
     mutationWatchDelay: 0,
     gridHelper: false

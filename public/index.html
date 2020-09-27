@@ -33,15 +33,15 @@
     
     <script>
         //console.log(window.AnimateIO)
-        AnimateIO.InitObservers();
-        setTimeout(function() {
-            let div = document.createElement('div');
-            div.className = "rohan";
-            div.innerText = "Rohan";
-            div.setAttribute('data-aiobserve', '');
-            div.setAttribute('data-aio-repeat', '');
-            document.body.appendChild(div);
-        }, 2000)
+        // AnimateIO.InitObservers();
+        // setTimeout(function() {
+        //     let div = document.createElement('div');
+        //     div.className = "rohan";
+        //     div.innerText = "Rohan";
+        //     div.setAttribute('data-aiobserve', '');
+        //     div.setAttribute('data-aio-repeat', '');
+        //     document.body.appendChild(div);
+        // }, 2000)
         //AnimateIO.init({mode: 'absolute'});
 
         // AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
@@ -50,17 +50,22 @@
         //     }
         // });
 
-        // AnimateIO.Animate({ mode: 'relative', gridHelper: true });
+        let mediaQuery = `
+            (min-width: 0px) and (max-width: 1024px),
+            (min-width: 1200px) and (max-width: 1500px),
+            (min-width: 1800px),
+        `;
+        AnimateIO.Animate({ gridHelper: true, activeRange: mediaQuery });
 
-        // setTimeout(function () {
-        //     let div = document.createElement('div');
-        //     div.className = "rohan";
-        //     div.innerText = "Rohan";
-        //     div.setAttribute('data-aio-0', 'font-size: 20px;');
-        //     div.setAttribute('data-aio-350', 'font-size: 400px;');
-        //     div.setAttribute('data-aio-repeat', true);
-        //     document.body.appendChild(div);
-        // }, 2000)
+        setTimeout(function () {
+            let div = document.createElement('div');
+            div.className = "rohan";
+            div.innerText = "Rohan";
+            div.setAttribute('data-aio-0', 'font-size: 20px;');
+            div.setAttribute('data-aio-350', 'font-size: 400px;');
+            div.setAttribute('data-aio-repeat', true);
+            document.body.appendChild(div);
+        }, 2000)
     </script>
 
 </body>
