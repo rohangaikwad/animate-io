@@ -170,6 +170,7 @@ propertyName|defaultValue|description
 `trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
 `mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
 
+&nbsp;
 #### `AnimationOptions`
 >AnimationOptions object consists of the below mentioned properties and values.
 
