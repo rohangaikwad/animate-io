@@ -9,6 +9,7 @@ Animate IO is a JavaScript library which allows you to perform animations based 
     1. [Step 2: Add HTML attributes](#step-2-add-the-stylesheet-tags-optional)
     1. [Step 4: Initialize AnimateIO](#step-4-initialize-animateio)
 1. [Documentation](#documentation)
+    1. [HTML Attributes](#html-attributes)
     1. [Methods](#methods)
     1. [Options](#options)
 
@@ -84,6 +85,33 @@ AnimateIO.InitObservers();
 &nbsp;
 
 ## Documentation
+### HTML Attributes
+> List of attributes to be used with [`AnimateIO.InitObservers(options)`](#animateioanimateoptions)
+
+attributeName|required|description
+-|-|-
+`data-aiobserve`|Required|This attribute allows the element to be tracked using the [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) and perform actions when it scrolls in/out of the viewport.
+&nbsp;|_Example_|`<div data-aiobserve></div>`
+`data-aio-repeat`|Optional|If this attribute is not added the element will stop being observed once it becomes visible in the viewport. This attribute will override the `options.repeat` property declared in [`AnimateIO.InitObservers(option)`](#animateioinitobserversoptions)
+&nbsp;|_Example_|`<div data-aio-repeat></div>`
+`data-aio-delay`|Optional|Time delay(milliseconds) in performing actions after the target scrolls in and out of the viewport. This attribute will override the `options.delay` property declared in [`AnimateIO.InitObservers(option)`](#animateioinitobserversoptions)
+&nbsp;|_Example_|`<div data-aio-delay="1000"></div>`
+`data-aio-enter-class`|Optional|Adds a custom class to the target element when it becomes visible in the viewport
+&nbsp;|_Example_|`<div data-aio-enter-class="customVisibleClass"></div>`
+`data-aio-exit-class`|Optional|Adds a custom class to the target element when it becomes scrolls out of the viewport
+&nbsp;|_Example_|`<div data-aio-exit-class="customHiddenClass"></div>`
+
+&nbsp;
+> List of attributes to be used with [`AnimateIO.Animate(options)`](#animateioanimateoptions)
+
+attributeName|required|description
+-|-|-
+`data-aio-<vertical_scroll_position>`|Required|This attribute creates a keyframe at the specified scroll position. At least 2 keyframes are needed to start the animation.
+&nbsp;|_Example Code_|`<div data-aio-100="font-size: 12px" data-aio-300="font-size: 36px">Hello</div>`
+&nbsp;|&nbsp;|When the window scroll position is `100px`, the elements `font-size` will be `12px`. As you start scrolling the page downwards, the `font-size` will keep increasing and will reach `36px` when the browser window scroll position has reached `300px`.
+
+&nbsp;
+
 ### Methods
 #### `AnimateIO.InitObservers(options)`
 >Start observing all the HTML elements that have the attribute `data-aiobserve`. Add or remove custom classes as defined in the HTML Element by using the attribute `data-aiobserve`, `data-aio-entry-class`, `data-aio-exit-class`. Lazily add attributes defined in the `data-aio-lazy-attr` attribute as a JSON stringified array, to the HTML Element when it becomes visible in the viewport.
@@ -142,13 +170,15 @@ propertyName|defaultValue|description
 `trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
 `mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
 
+&nbsp;
 #### `AnimationOptions`
 >AnimationOptions object consists of the below mentioned properties and values.
 
 propertyName|defaultValue|description
 -|-|-
-`mode`|'relative'|Time delay in performing actions after the target scrolls in and out of the viewport.
+`mode`|'relative'|In `relative` mode, the keyframe position is calculated relative to the position of the element in the viewport. In `absolute` mode, the keyframe position is calculated relative to the absolute scroll position of the browser window.
 `fps`|null|The amount of css property transformations/calculations to perform in a second. The higher the number, the smoother will be the animation, but this will come at the cost of performance. By default this is set to null and the browser chooses the optimal number of calculations to perform per second using [`window.requestAnimationFrame()`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+`deactivateBelow`|1025|Stop animating CSS properties if viewport width is below the specified number, which by default is 1025.
 `trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
 `mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
 `gridHelper`|false|Use this to display horizontal lines every 100 pixels. This can help you to easily set the desired keyframe positions. By default this is set to false.
