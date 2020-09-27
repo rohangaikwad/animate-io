@@ -68,7 +68,7 @@ div.container {
 
 
         .logo-text {
-            font-size: 0; overflow: hidden;
+            font-size: 0; //overflow: hidden;
             .char {display: inline-block; font-size: 128px; font-weight: 800; transform: translateY(100%); transition: 0s; opacity: 0; color: #f1f1f1; }
             .io { color: #ff7272; color: #e91e63; }
 
