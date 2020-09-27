@@ -1,6 +1,6 @@
 import { OverrideDefaultObserverSettings, OverrideDefaultAnimationSettings } from './modules/Settings';
-import { ObserveElementsOnce, ObserveElementsContinuous, KillAllObservers, RestartAnimateIO, DestroyAnimateIO, InitAIObservers } from './modules/Observer';
-import { InitAnimations, KillAnimateInstance, RestartAnimateInstance } from './modules/Animations';
+import { ObserveElementsOnce, ObserveElementsContinuous, KillAllObservers, RestartAnimateIO, DestroyAnimateIO, InitAIObservers } from './modules/ObserverManager';
+import { InitAnimations, KillAnimateInstance, RestartAnimateInstance } from './modules/AnimationManager';
 
 ((window) => {
     let InitObservers = (_settings) => {

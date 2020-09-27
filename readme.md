@@ -1,6 +1,12 @@
 # AnimateIO
 Animate IO is a JavaScript library which allows you to perform animations based on scroll position & the visibility of an element, using IntersectionObserver.
 
+You can animate HTML elements that are loaded via an AJAX request or generated dynamically way later post initialization. This is done by tracking the newly added HTML elements using the MutationObserver.
+
+Tasks related to performing animation calculations are executed only when the element is visible in the viewport. This is achieved by using the IntersectionObserver.
+
+Shout-out to [skrollr](https://github.com/Prinzhorn/skrollr) which has been the inspiration for creating this library.
+
 ## TOC
 1. [Features](#features)
 1. [Getting Started](#getting-started)
@@ -211,3 +217,5 @@ https://polyfill.io/v3/url-builder/
 https://clontz.org/blog/2014/05/08/git-subtree-push-for-deployment/
 
 https://stackoverflow.com/questions/12644855/how-do-i-reset-a-heroku-git-repository-to-its-initial-state/13403588#13403588
+
+https://stackoverflow.com/questions/31659567/performance-of-mutationobserver-to-detect-nodes-in-entire-dom/39332340

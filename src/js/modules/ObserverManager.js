@@ -72,6 +72,16 @@ const ObserveAIOElements = () => {
             }
         }
 
+        debugger;
+        let elementToObserve = elem;
+        // watch self or another element(s)
+        if (elem.hasAttribute('data-aio-ref')) {
+            let refElems = document.querySelectorAll(elem.getAttribute('data-aio-ref'));
+            if (refElems.length > 0) {
+                elementToObserve = refElems;
+            }
+        }
+
         let intersectionsettings = {
             root: ObserverSettings.root,
             rootMargin: rootMargin,
@@ -91,14 +101,14 @@ const ObserveAIOElements = () => {
                         attributesApplied = true;
                         lazy_attr_list.forEach(attr => {
                             let key = Object.keys(attr)[0];
-                            entry.target.setAttribute(key, attr[key]);
+                            elem.setAttribute(key, attr[key]);
                         });
                     }
 
                     // add entry class names & remove exit class names
                     entryTimeOut = setTimeout(() => {
-                        RemoveClasses(entry.target, exit_classlist);
-                        AddClasses(entry.target, entry_classlist);
+                        RemoveClasses(elem, exit_classlist);
+                        AddClasses(elem, entry_classlist);
                     }, delay);
                 }
 
@@ -106,8 +116,8 @@ const ObserveAIOElements = () => {
                     clearTimeout(entryTimeOut);
 
                     // add exit class names & remove entry class names
-                    RemoveClasses(entry.target, entry_classlist);
-                    AddClasses(entry.target, exit_classlist);
+                    RemoveClasses(elem, entry_classlist);
+                    AddClasses(elem, exit_classlist);
                 }
 
                 if (ratio == 0 && !repeat && intersected) {
@@ -117,7 +127,18 @@ const ObserveAIOElements = () => {
             })
         }, intersectionsettings);
 
-        Observer.observe(elem);
+
+        if (NodeList.prototype.isPrototypeOf(elementToObserve)) {
+            // watch multiple objects
+            debugger;
+            elementToObserve.forEach(_elem => {                
+                Observer.observe(_elem);
+            })
+        } else {
+            // watch self
+            Observer.observe(elem);
+        }
+
         ObserverList.push(Observer);
     });
 }

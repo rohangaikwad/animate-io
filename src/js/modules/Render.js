@@ -56,7 +56,8 @@ export const RenderLoop = () => {
         //convert offset to absolute
         if (AnimationSettings.mode == "relative") {
             frames.forEach((f, i) => {
-                let offset = elemTop + f.offset - window.innerHeight;
+                let offset = elemTop + f.offset;
+                //offset -= window.innerHeight;
                 f.absOffset = offset;
                 elem.setAttribute(`data-kf-${i}`, offset);
             })
@@ -133,9 +134,9 @@ let setStyle = (elem, key, value) => {
         // convert font-size to fontSize
         let uprCs = match[0].toUpperCase();
         let prop = key.replace(match[0], uprCs).replace('-', '');
-        style[prop] = value
+        style[prop] = value;   
     } else {
-        style[key] = value;
+        style[key] = value;     
     }
 }
 

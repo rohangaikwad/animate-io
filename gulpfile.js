@@ -119,7 +119,7 @@ gulp.task('aio-style', (done) => {
 });
 
 gulp.task('demo-style', (done) => {
-    gulp.src(['docs/css/style.scss'])
+    gulp.src([`${public_css}/style.scss`])
         //.pipe(sourcemaps.init())
         .pipe(sass({ outputStyle: 'compact' }).on('error', sass.logError))
         .pipe(postcss([autoprefixer()]))

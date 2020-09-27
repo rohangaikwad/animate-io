@@ -1,47 +1,151 @@
-/**
- * https://github.com/rohangaikwad/animate-io
- * Author: Rohan gaikwad
- * Generated on Sunday, September 27th 2020, 1:02:01 pm
- */
-
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 var _Settings = require("./modules/Settings");
 
-var _Observer = require("./modules/Observer");
+var _ObserverManager = require("./modules/ObserverManager");
 
-var _Animations = require("./modules/Animations");
+var _AnimationManager = require("./modules/AnimationManager");
 
 (window => {
   let InitObservers = _settings => {
     // override settings passed from initialization
     (0, _Settings.OverrideDefaultObserverSettings)(_settings); // scan for observable elements, attach intersection observer to each
 
-    (0, _Observer.InitAIObservers)();
+    (0, _ObserverManager.InitAIObservers)();
   };
 
   let Animate = _settings => {
     // override settings passed from initialization
     (0, _Settings.OverrideDefaultAnimationSettings)(_settings); // scan for animateable elements, build the state machine, init rendering
 
-    (0, _Animations.InitAnimations)();
+    (0, _AnimationManager.InitAnimations)();
   };
 
   window.AnimateIO = {
     InitObservers: InitObservers,
-    Observe: _Observer.ObserveElementsContinuous,
-    ObserveOnce: _Observer.ObserveElementsOnce,
-    StopObservers: _Observer.KillAllObservers,
-    DestroyObservers: _Observer.DestroyAnimateIO,
-    RestartObservers: _Observer.RestartAnimateIO,
+    Observe: _ObserverManager.ObserveElementsContinuous,
+    ObserveOnce: _ObserverManager.ObserveElementsOnce,
+    StopObservers: _ObserverManager.KillAllObservers,
+    DestroyObservers: _ObserverManager.DestroyAnimateIO,
+    RestartObservers: _ObserverManager.RestartAnimateIO,
     Animate: Animate,
-    AnimateEnd: _Animations.KillAnimateInstance,
-    AnimateRestart: _Animations.RestartAnimateInstance
+    AnimateEnd: _AnimationManager.KillAnimateInstance,
+    AnimateRestart: _AnimationManager.RestartAnimateInstance
   };
 })(window);
 
-},{"./modules/Animations":3,"./modules/Observer":7,"./modules/Settings":9}],2:[function(require,module,exports){
+},{"./modules/AnimationManager":2,"./modules/ObserverManager":7,"./modules/Settings":9}],2:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RestartAnimateInstance = exports.KillAnimateInstance = exports.InitAnimations = void 0;
+
+var _AnimationStateMachine = require("./AnimationStateMachine");
+
+var _Helpers = require("./Helpers");
+
+var _Mutations = require("./Mutations");
+
+var _Render = require("./Render");
+
+var _Settings = require("./Settings");
+
+let AnimationsInitialized = false;
+
+const InitAnimations = () => {
+  if (AnimationsInitialized) {
+    console.error('AnimateIO.Animate() already initialized. To start a new instance, please stop the current animations instance using:\nAnimateIO.StopAnimations();');
+  } // Check if browser dimensions are correct
+
+
+  let canInitialize = (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange);
+
+  if (!canInitialize) {
+    console.log(`AnimateIO.Animate() can't initialize since the screen width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
+    return;
+  } // Initiate animation observer
+
+
+  (0, _AnimationStateMachine.InitiateAnimationObserver)(); //scan for animateable elements, build the state machine
+
+  (0, _AnimationStateMachine.InitAnimationStateMachine)(); // attach an observer to all the elements added to the State Machine
+
+  (0, _AnimationStateMachine.ObserveStateMachineObjects)(); // init rendering for all the elements
+
+  (0, _Render.InitRenderer)(); // look for new animateable objects with the signature data-aio-<int>
+  // start looking for new elements after an arbitrary delay of 2 seconds
+
+  if (_Settings.AnimationSettings.trackMutations) {
+    setTimeout(() => AddNewElementsToStateMachine(), _Settings.AnimationSettings.mutationWatchDelay);
+  } // show a helper grid and markers for where an animation will start and end
+
+
+  if (_Settings.AnimationSettings.gridHelper) {
+    setTimeout(() => (0, _Helpers.DrawGrid)(), 1000);
+  }
+
+  AnimationsInitialized = true; // Check for browser resolution changes    
+
+  WatchBrowserResize();
+};
+
+exports.InitAnimations = InitAnimations;
+
+const AddNewElementsToStateMachine = () => {
+  (0, _Mutations.AddMutationListener)({
+    name: 'animations_listener',
+    callback: mutations => {
+      (0, _AnimationStateMachine.UpdateStateMachine)();
+    }
+  });
+};
+
+const WatchBrowserResize = () => {
+  (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange, response => {
+    if (response.matches) {
+      // Start animations if not already initialized
+      if (!AnimationsInitialized) {
+        if (response.remove != null) {
+          response.remove();
+          console.log(`Restarting AnimateIO.Animate as browser width is inside the acceptable range: ${_Settings.AnimationSettings.activeRange}px`);
+          InitAnimations();
+        }
+      }
+    } else {
+      // stop the animations if browser window shrinks below defined width
+      if (AnimationsInitialized) {
+        console.log(`Stopping AnimateIO.Animate as browser width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
+        KillAnimateInstance();
+      }
+    }
+  });
+};
+
+const KillAnimateInstance = () => {
+  // stop rendering
+  (0, _Render.StopRenderLoop)(); // Stop animation intersection observer
+
+  (0, _AnimationStateMachine.StopAnimationObserver)(); // disconnect mutation observer
+
+  (0, _Mutations.ResetMutationObserver)(); // reset state machine & remove state machine id attribute
+
+  (0, _AnimationStateMachine.ResetStateMachine)();
+  AnimationsInitialized = false;
+};
+
+exports.KillAnimateInstance = KillAnimateInstance;
+
+const RestartAnimateInstance = () => {
+  KillAnimateInstance();
+  InitAnimations();
+};
+
+exports.RestartAnimateInstance = RestartAnimateInstance;
+
+},{"./AnimationStateMachine":3,"./Helpers":5,"./Mutations":6,"./Render":8,"./Settings":9}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -279,117 +383,7 @@ const ResetStateMachine = () => {
 
 exports.ResetStateMachine = ResetStateMachine;
 
-},{"./Constants":4,"./Render":8,"./Settings":9}],3:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.RestartAnimateInstance = exports.KillAnimateInstance = exports.InitAnimations = void 0;
-
-var _AnimationStateMachine = require("./AnimationStateMachine");
-
-var _Helpers = require("./Helpers");
-
-var _Mutations = require("./Mutations");
-
-var _Render = require("./Render");
-
-var _Settings = require("./Settings");
-
-let AnimationsInitialized = false;
-
-const InitAnimations = () => {
-  if (AnimationsInitialized) {
-    console.error('AnimateIO.Animate() already initialized. To start a new instance, please stop the current animations instance using:\nAnimateIO.StopAnimations();');
-  } // Check if browser dimensions are correct
-
-
-  let canInitialize = (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange);
-
-  if (!canInitialize) {
-    console.log(`AnimateIO.Animate() can't initialize since the screen width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
-    return;
-  } // Initiate animation observer
-
-
-  (0, _AnimationStateMachine.InitiateAnimationObserver)(); //scan for animateable elements, build the state machine
-
-  (0, _AnimationStateMachine.InitAnimationStateMachine)(); // attach an observer to all the elements added to the State Machine
-
-  (0, _AnimationStateMachine.ObserveStateMachineObjects)(); // init rendering for all the elements
-
-  (0, _Render.InitRenderer)(); // look for new animateable objects with the signature data-aio-<int>
-  // start looking for new elements after an arbitrary delay of 2 seconds
-
-  if (_Settings.AnimationSettings.trackMutations) {
-    setTimeout(() => AddNewElementsToStateMachine(), _Settings.AnimationSettings.mutationWatchDelay);
-  } // show a helper grid and markers for where an animation will start and end
-
-
-  if (_Settings.AnimationSettings.gridHelper) {
-    setTimeout(() => (0, _Helpers.DrawGrid)(), 1000);
-  }
-
-  AnimationsInitialized = true; // Check for browser resolution changes    
-
-  WatchBrowserResize();
-};
-
-exports.InitAnimations = InitAnimations;
-
-const AddNewElementsToStateMachine = () => {
-  (0, _Mutations.AddMutationListener)({
-    name: 'animations_listener',
-    callback: mutations => {
-      (0, _AnimationStateMachine.UpdateStateMachine)();
-    }
-  });
-};
-
-const WatchBrowserResize = () => {
-  (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange, response => {
-    if (response.matches) {
-      // Start animations if not already initialized
-      if (!AnimationsInitialized) {
-        if (response.remove != null) {
-          response.remove();
-          console.log(`Restarting AnimateIO.Animate as browser width is inside the acceptable range: ${_Settings.AnimationSettings.activeRange}px`);
-          InitAnimations();
-        }
-      }
-    } else {
-      // stop the animations if browser window shrinks below defined width
-      if (AnimationsInitialized) {
-        console.log(`Stopping AnimateIO.Animate as browser width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
-        KillAnimateInstance();
-      }
-    }
-  });
-};
-
-const KillAnimateInstance = () => {
-  // stop rendering
-  (0, _Render.StopRenderLoop)(); // Stop animation intersection observer
-
-  (0, _AnimationStateMachine.StopAnimationObserver)(); // disconnect mutation observer
-
-  (0, _Mutations.ResetMutationObserver)(); // reset state machine & remove state machine id attribute
-
-  (0, _AnimationStateMachine.ResetStateMachine)();
-  AnimationsInitialized = false;
-};
-
-exports.KillAnimateInstance = KillAnimateInstance;
-
-const RestartAnimateInstance = () => {
-  KillAnimateInstance();
-  InitAnimations();
-};
-
-exports.RestartAnimateInstance = RestartAnimateInstance;
-
-},{"./AnimationStateMachine":2,"./Helpers":5,"./Mutations":6,"./Render":8,"./Settings":9}],4:[function(require,module,exports){
+},{"./Constants":4,"./Render":8,"./Settings":9}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -655,6 +649,17 @@ const ObserveAIOElements = () => {
       }
     }
 
+    debugger;
+    let elementToObserve = elem; // watch self or another element(s)
+
+    if (elem.hasAttribute('data-aio-ref')) {
+      let refElems = document.querySelectorAll(elem.getAttribute('data-aio-ref'));
+
+      if (refElems.length > 0) {
+        elementToObserve = refElems;
+      }
+    }
+
     let intersectionsettings = {
       root: _Settings.ObserverSettings.root,
       rootMargin: rootMargin,
@@ -672,22 +677,22 @@ const ObserveAIOElements = () => {
             attributesApplied = true;
             lazy_attr_list.forEach(attr => {
               let key = Object.keys(attr)[0];
-              entry.target.setAttribute(key, attr[key]);
+              elem.setAttribute(key, attr[key]);
             });
           } // add entry class names & remove exit class names
 
 
           entryTimeOut = setTimeout(() => {
-            (0, _Helpers.RemoveClasses)(entry.target, exit_classlist);
-            (0, _Helpers.AddClasses)(entry.target, entry_classlist);
+            (0, _Helpers.RemoveClasses)(elem, exit_classlist);
+            (0, _Helpers.AddClasses)(elem, entry_classlist);
           }, delay);
         }
 
         if (ratio == 0 && repeat) {
           clearTimeout(entryTimeOut); // add exit class names & remove entry class names
 
-          (0, _Helpers.RemoveClasses)(entry.target, entry_classlist);
-          (0, _Helpers.AddClasses)(entry.target, exit_classlist);
+          (0, _Helpers.RemoveClasses)(elem, entry_classlist);
+          (0, _Helpers.AddClasses)(elem, exit_classlist);
         }
 
         if (ratio == 0 && !repeat && intersected) {
@@ -697,7 +702,18 @@ const ObserveAIOElements = () => {
         }
       });
     }, intersectionsettings);
-    Observer.observe(elem);
+
+    if (NodeList.prototype.isPrototypeOf(elementToObserve)) {
+      // watch multiple objects
+      debugger;
+      elementToObserve.forEach(_elem => {
+        Observer.observe(_elem);
+      });
+    } else {
+      // watch self
+      Observer.observe(elem);
+    }
+
     ObserverList.push(Observer);
   });
 };
@@ -869,7 +885,8 @@ const RenderLoop = () => {
 
     if (_Settings.AnimationSettings.mode == "relative") {
       frames.forEach((f, i) => {
-        let offset = elemTop + f.offset - window.innerHeight;
+        let offset = elemTop + f.offset; //offset -= window.innerHeight;
+
         f.absOffset = offset;
         elem.setAttribute(`data-kf-${i}`, offset);
       });
@@ -965,7 +982,7 @@ const ForceRenderLoop = () => {
 
 exports.ForceRenderLoop = ForceRenderLoop;
 
-},{"./AnimationStateMachine":2,"./Settings":9}],9:[function(require,module,exports){
+},{"./AnimationStateMachine":3,"./Settings":9}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

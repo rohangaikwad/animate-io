@@ -7,42 +7,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
     <meta name="author" content="Rohan Gaikwad">
     <script src="js/animate-io.min.js"></script>
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/animate-io.min.css">
-    <link rel="stylesheet" id="style" href="css/style.min.css">
+    <link rel="stylesheet" id="style" href="css/style.min.css" data-href="css/style.min.css">
 </head>
 
 <body>
 
-    <div data-aiobserve data-aio-enter-class="animate" data-aio-exit-class="dont-animate" data-aio-delay="0" data-aio-repeat class="main">
-        <div class="l1">1</div>
-        <div class="l2">2</div>
-        <div class="l3">3</div>
+    <aside class="sidebar">
+        <ul>
+            <li class="menu-item" data-aio-enter-class="active" data-aiobserve data-aio-repeat data-aio-ref="section.observe.ref">
+                <a href="#abc">Observe</a>
+            </li>
+            <li class="menu-item" data-aio-enter-class="active" data-aiobserve data-aio-repeat data-aio-ref="section.animate.ref">
+                <a href="#abc">Animate</a>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="container">
+        <section class="logo" data-aiobserve data-aio-delay="1250" data-aio-enter-class="min">
+            <div class="bg-wrapper" data-aio-500="background-color:rgb(19, 22, 41);" data-aio-750="background-color:rgb(220,220,220);">
+                <div class="logo-text" data-aiobserve data-aio-delay="250" data-aio-enter-class="show">
+                    <div class="char">A</div>
+                    <div class="char">n</div>
+                    <div class="char">i</div>
+                    <div class="char">m</div>
+                    <div class="char">a</div>
+                    <div class="char">t</div>
+                    <div class="char">e</div>
+                    <div class="char io">I</div>
+                    <div class="char io">O</div>
+                </div>
+
+                <div class="sep" data-aiobserve data-aio-delay="1250"></div>
+
+                <div class="get-code" data-aiobserve data-aio-delay="1250">
+                    <ul class="tabs">
+                        <li class="active">CDN</li>
+                        <li>CDN Legacy Browsers</li>
+                        <li>Download</li>
+                    </ul>
+                    <ul class="tabs-content">
+                        <li class="code active">
+                            <pre class="code-block">
+    <span class="arrow">&lt;</span><span class="tag">script</span><span> </span><span class="attr">src</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io.min.js"</span><span class="arrow">&gt;&lt;/</span><span class="tag">script</span><span class="arrow">&gt;</span>
+    <span class="sep"></span>
+
+    <span class="arrow">&lt;</span><span class="tag">link</span><span> </span><span class="attr">rel</span><span class="arrow">=</span><span class="value">"stylesheet"</span><span> </span><span class="attr">href</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io.min.css"</span><span class="arrow">&gt;</span>
+                            </pre>
+                        </li>
+                        <li class="code legacy">
+                            <pre class="code-block">
+    <span class="arrow">&lt;</span><span class="tag">script</span><span> </span><span class="attr">src</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/polyfill.min.js"</span><span class="arrow">&gt;&lt;/</span><span class="tag">script</span><span class="arrow">&gt;</span>
+    <span class="sep"></span>
+    <span class="arrow">&lt;</span><span class="tag">script</span><span> </span><span class="attr">src</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io-es2015.min.js"</span><span class="arrow">&gt;&lt;/</span><span class="tag">script</span><span class="arrow">&gt;</span>
+    <span class="sep"></span>
+    <span class="arrow">&lt;</span><span class="tag">link</span><span> </span><span class="attr">rel</span><span class="arrow">=</span><span class="value">"stylesheet"</span><span> </span><span class="attr">href</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io.min.css"</span><span class="arrow">&gt;</span>
+                            </pre>
+                        </li>
+                        <li class="downloads">
+
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- <section class="animate ref" data-aiobserve data-aio-enter-class="active" data-aio-repeat>
+            <h1 data-aio data-aio-0="font-size: 14px; color:rgba(255, 0, 255, 1);" data-aio-900="font-size: 140px; color:rgba(0, 255, 255, 1);">WOOOT</h1>
+        </section>
+
+        <section class="observe ref" data-aiobserve data-aio-enter-class="active" data-aio-repeat>
+            <div data-aiobserve data-aio-enter-class="animate" data-aio-exit-class="dont-animate" data-aio-delay="0" data-aio-repeat class="main">
+                <div class="l1">1</div>
+                <div class="l2">2</div>
+                <div class="l3">3</div>
+            </div>
+            <div class="sep"></div>
+        </section> -->
+
     </div>
-    <div class="sep"></div>
-    <img data-aiobserve data-aio-lazy-attr='[{"src":"path/to/image.jpg"}]'>
-    <img data-aiobserve data-aio-lazy-attr>
 
-    <h1 data-aio data-aio-600="font-size: calc(28px / 2); color: red;"
-        data-aio-900="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
 
-    <!-- <h1 data-aio data-aio-100="font-size: calc(28px / 2); color: red;" data-aio-200="font-size: calc(108px / 2); font-weight: bold;">WOOOT</h1>
-    <div class="sep"></div>
-    <div class="test" data-aio data-aio-800="font-size: 20px; transform: rotateZ(0deg)" data-aio-1000="font-size: 100px; transform: rotateZ(360deg)">Hello</div>
-    <div class="sep"></div>
-    <div class="test" data-aio-200="font-size: 50px;">Hello1</div> -->
-    
+    <script src="js/demo.js"></script>
     <script>
-        //console.log(window.AnimateIO)
-        // AnimateIO.InitObservers();
-        // setTimeout(function() {
-        //     let div = document.createElement('div');
-        //     div.className = "rohan";
-        //     div.innerText = "Rohan";
-        //     div.setAttribute('data-aiobserve', '');
-        //     div.setAttribute('data-aio-repeat', '');
-        //     document.body.appendChild(div);
-        // }, 2000)
-        //AnimateIO.init({mode: 'absolute'});
+        AnimateIO.InitObservers();
 
         // AnimateIO.observe('h1', { threshold: 1 }, (intersection) => {
         //     intersection.in = () => {
@@ -50,22 +100,16 @@
         //     }
         // });
 
-        let mediaQuery = `
-            (min-width: 0px) and (max-width: 1024px),
-            (min-width: 1200px) and (max-width: 1500px),
-            (min-width: 1800px),
-        `;
-        AnimateIO.Animate({ gridHelper: true, activeRange: mediaQuery });
+        let mediaQuery = `(min-width: 0px)`;
+        AnimateIO.Animate({ gridHelper: true, activeRange: mediaQuery, fps: 120 });
 
-        setTimeout(function () {
-            let div = document.createElement('div');
-            div.className = "rohan";
-            div.innerText = "Rohan";
-            div.setAttribute('data-aio-0', 'font-size: 20px;');
-            div.setAttribute('data-aio-350', 'font-size: 400px;');
-            div.setAttribute('data-aio-repeat', true);
-            document.body.appendChild(div);
-        }, 2000)
+        let style = document.querySelector('#style');
+        setInterval(() => updateStyle(), 2000);
+        let updateStyle = () => {
+            let href = style.getAttribute('data-href')
+            //style.setAttribute('href', `${href}?v=${new Date().getTime()}`);
+        }
+        updateStyle();
     </script>
 
 </body>
