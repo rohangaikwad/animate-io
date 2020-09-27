@@ -296,10 +296,19 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
         var entry = _objectSpread({}, SMOTemplate);
 
+        var mode = _Settings.AnimationSettings.mode;
+
+        if (elem.hasAttribute('data-aio-mode')) {
+          var _mode = elem.getAttribute('data-aio-mode');
+
+          if (_mode.length > 0) mode = _mode;
+        }
+
         entry.id = id;
+        entry.mode = mode;
         entry.repeat = elem.hasAttribute('data-aio-repeat');
         entry.domElement = elem;
-        entry.keyframes = processKeyFrames(keyframes, elem);
+        entry.keyframes = processKeyFrames(keyframes, elem, mode);
         entry.observerAttached = false;
 
         if (keyframes.length == 1) {
@@ -312,7 +321,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       done(_elements.length);
     };
 
-    var processKeyFrames = function processKeyFrames(kf, elem) {
+    var processKeyFrames = function processKeyFrames(kf, elem, elem_mode) {
       var frames = [];
       kf.forEach(function (f, i) {
         var _props = {};
@@ -344,7 +353,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         elem.setAttribute("data-kf-".concat(i), _offset);
       }); //convert offset to absolute
 
-      if (_Settings.AnimationSettings.mode == "relative") {
+      if (elem_mode == "relative") {
         frames.forEach(function (f, i) {
           var offset = elem.offsetTop + f.offset - window.innerHeight;
           f.absOffset = offset;
@@ -989,21 +998,21 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       document.body.setAttribute("data-scroll-top", scrollTop);
       forceRender = false;
 
-      var entries = _AnimationStateMachine.StateMachine.elements.filter(function (entry) {
+      var visibleSMObjects = _AnimationStateMachine.StateMachine.elements.filter(function (entry) {
         return entry.ratio > 0;
       });
 
-      entries.forEach(function (entry) {
-        var frames = entry.keyframes;
-        var elem = entry.domElement;
-        var elemTop = elem.offsetTop; //convert offset to absolute
+      visibleSMObjects.forEach(function (smObject) {
+        var frames = smObject.keyframes;
+        var domElement = smObject.domElement;
+        var elemTop = domElement.offsetTop; //convert offset to absolute
 
-        if (_Settings.AnimationSettings.mode == "relative") {
+        if (smObject.mode == "relative") {
           frames.forEach(function (f, i) {
             var offset = elemTop + f.offset; //offset -= window.innerHeight;
 
             f.absOffset = offset;
-            elem.setAttribute("data-kf-".concat(i), offset);
+            domElement.setAttribute("data-kf-".concat(i), offset);
           });
         }
 
@@ -1023,7 +1032,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
               var value = _interpolateString(prop.value);
 
-              setStyle(elem, key, value);
+              setStyle(domElement, key, value);
             });
             return {
               v: void 0
@@ -1036,7 +1045,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
             var value = _interpolateString(interpolatedValue);
 
-            setStyle(elem, key, value);
+            setStyle(domElement, key, value);
           });
         };
 
