@@ -12,6 +12,7 @@ Animate IO is a JavaScript library which allows you to perform animations based 
     1. [HTML Attributes](#html-attributes)
     1. [Methods](#methods)
     1. [Options](#options)
+1. [Compatibility](#compatibility)
 
 &nbsp;
 
@@ -178,10 +179,15 @@ propertyName|defaultValue|description
 -|-|-
 `mode`|'relative'|In `relative` mode, the keyframe position is calculated relative to the position of the element in the viewport. In `absolute` mode, the keyframe position is calculated relative to the absolute scroll position of the browser window.
 `fps`|null|The amount of css property transformations/calculations to perform in a second. The higher the number, the smoother will be the animation, but this will come at the cost of performance. By default this is set to null and the browser chooses the optimal number of calculations to perform per second using [`window.requestAnimationFrame()`](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
-`deactivateBelow`|1025|Stop animating CSS properties if viewport width is below the specified number, which by default is 1025.
+`activeRange`|'(min-width: 1025px)'|This property defines the browser viewport range within which the calculations/transformations may execute. `activeRange` property accepts a media query string, which is then parsed into a [`MediaQueryList`](https://developer.mozilla.org/en-US/docs/Web/API/MediaQueryList) object. The animation calculations are performed only when [`MediaQueryList.matches`](https://developer.mozilla.org/en-US/docs/Web/API/MediaQueryList/matches) returns **true**. The default value **'(min-width: 1025px)'** ensures, that animations occur only when the browser's viewport width is at least 1025px. Please note that you can define multiple ranges in the media query string as follows: `'(min-width: 768px) and (max-width: 1024px), (min-width: 1366px)'`
 `trackMutations`|true|Using the [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver), we are checking if any new HTMLElement is added to the page that has the attribute `data-aiobserve` and start observing it. This is especially useful for observing elements that are added after the page finishes loading (Example: New HTML elements added using an AJAX request or using some JavaScript).  To change this default behaviour set `trackMutations` to **false**.
-`mutationWatchDelay`|0|Specidy the delay in milliseconds to start looking for new HTML elements.
+`mutationWatchDelay`|0|Specify the delay in milliseconds to start looking for new HTML elements.
 `gridHelper`|false|Use this to display horizontal lines every 100 pixels. This can help you to easily set the desired keyframe positions. By default this is set to false.
+
+&nbsp;
+
+## Compatibility
+Chrome, Firefox, Microsft Edge, Safari, Internet Explorer 11+
 
 &nbsp;
 
