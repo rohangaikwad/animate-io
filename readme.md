@@ -104,6 +104,10 @@ attributeName|required|description
 &nbsp;|_Example_|`<div data-aio-repeat></div>`
 `data-aio-delay`|Optional|Time delay(milliseconds) in performing actions after the target scrolls in and out of the viewport. This attribute will override the `options.delay` property declared in [`AnimateIO.InitObservers(option)`](#animateioinitobserversoptions)
 &nbsp;|_Example_|`<div data-aio-delay="1000"></div>`
+`data-aio-ref`|Optional|This property tells the observer to watch the element described in the attribute value & perform actions when the other element scrolls in & out of the viewport.
+&nbsp;|_Example_|`<div class="main" data-aio-ref=".test"></div>`
+&nbsp;| |`<div class="test"></div>`
+&nbsp;| |Actions will be performed on the element with `class="main"`, when the element `class="test"` scrolls in/out of the viewport.
 `data-aio-enter-class`|Optional|Adds a custom class to the target element when it becomes visible in the viewport
 &nbsp;|_Example_|`<div data-aio-enter-class="customVisibleClass"></div>`
 `data-aio-exit-class`|Optional|Adds a custom class to the target element when it becomes scrolls out of the viewport
@@ -114,8 +118,9 @@ attributeName|required|description
 
 attributeName|required|description
 -|-|-
+`data-aio-mode`|Optional| `relative|absolute` This attribute will override the options.mode property declared in [`AnimateIO.Animate(options)`](#animateioanimateoptions)
 `data-aio-<vertical_scroll_position>`|Required|This attribute creates a keyframe at the specified scroll position. At least 2 keyframes are needed to start the animation.
-&nbsp;|_Example Code_|`<div data-aio-100="font-size: 12px" data-aio-300="font-size: 36px">Hello</div>`
+&nbsp;||**Example:** `<div data-aio-100="font-size: 12px" data-aio-300="font-size: 36px">Hello</div>`
 &nbsp;|&nbsp;|When the window scroll position is `100px`, the elements `font-size` will be `12px`. As you start scrolling the page downwards, the `font-size` will keep increasing and will reach `36px` when the browser window scroll position has reached `300px`.
 
 &nbsp;
