@@ -86,7 +86,7 @@ AnimateIO.InitObservers();
 
 ## Documentation
 ### HTML Attributes
-> List of attributes to be used with `AnimateIO.InitObservers(options)`
+> List of attributes to be used with [`AnimateIO.InitObservers(options)`](#animateioanimateoptions)
 
 attributeName|required|description
 -|-|-
@@ -101,7 +101,8 @@ attributeName|required|description
 `data-aio-exit-class`|Optional|Adds a custom class to the target element when it becomes scrolls out of the viewport
 &nbsp;|_Example_|`<div data-aio-exit-class="customHiddenClass"></div>`
 
-> List of attributes to be used with `AnimateIO.Animate(options)`
+&nbsp;
+> List of attributes to be used with [`AnimateIO.Animate(options)`](#animateioanimateoptions)
 
 attributeName|required|description
 -|-|-
