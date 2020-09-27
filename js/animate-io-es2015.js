@@ -1,3 +1,9 @@
+/**
+ * https://github.com/rohangaikwad/animate-io
+ * Author: Rohan gaikwad
+ * Generated on Sunday, September 27th 2020, 1:02:01 pm
+ */
+
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -381,10 +387,10 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       } // Check if browser dimensions are correct
 
 
-      var canInitialize = (0, _Helpers.QueryMedia)("(min-width: ".concat(_Settings.AnimationSettings.deactivateBelow, "px)"));
+      var canInitialize = (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange);
 
       if (!canInitialize) {
-        console.log("AnimateIO.Animate() can't initialize since the screen width is less than ".concat(_Settings.AnimationSettings.deactivateBelow));
+        console.log("AnimateIO.Animate() can't initialize since the screen width is outside the range: ".concat(_Settings.AnimationSettings.activeRange));
         return;
       } // Initiate animation observer
 
@@ -428,20 +434,20 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     };
 
     var WatchBrowserResize = function WatchBrowserResize() {
-      (0, _Helpers.QueryMedia)("(min-width: ".concat(_Settings.AnimationSettings.deactivateBelow, "px)"), function (response) {
+      (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange, function (response) {
         if (response.matches) {
           // Start animations if not already initialized
           if (!AnimationsInitialized) {
             if (response.remove != null) {
               response.remove();
-              console.log("Restarting AnimateIO.Animate as browser width is >= ".concat(_Settings.AnimationSettings.deactivateBelow, "px"));
+              console.log("Restarting AnimateIO.Animate as browser width is inside the acceptable range: ".concat(_Settings.AnimationSettings.activeRange, "px"));
               InitAnimations();
             }
           }
         } else {
           // stop the animations if browser window shrinks below defined width
           if (AnimationsInitialized) {
-            console.log("Stopping AnimateIO.Animate as browser width is < ".concat(_Settings.AnimationSettings.deactivateBelow, "px"));
+            console.log("Stopping AnimateIO.Animate as browser width is outside the range: ".concat(_Settings.AnimationSettings.activeRange));
             KillAnimateInstance();
           }
         }
@@ -1116,7 +1122,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
     var DefaultAnimationSettings = {
       mode: 'relative',
       fps: null,
-      deactivateBelow: 1025,
+      activeRange: '(min-width: 1025px)',
       trackMutations: true,
       mutationWatchDelay: 0,
       gridHelper: false

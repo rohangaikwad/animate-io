@@ -1,3 +1,9 @@
+/**
+ * https://github.com/rohangaikwad/animate-io
+ * Author: Rohan gaikwad
+ * Generated on Sunday, September 27th 2020, 1:02:01 pm
+ */
+
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
@@ -299,10 +305,10 @@ const InitAnimations = () => {
   } // Check if browser dimensions are correct
 
 
-  let canInitialize = (0, _Helpers.QueryMedia)(`(min-width: ${_Settings.AnimationSettings.deactivateBelow}px)`);
+  let canInitialize = (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange);
 
   if (!canInitialize) {
-    console.log(`AnimateIO.Animate() can't initialize since the screen width is less than ${_Settings.AnimationSettings.deactivateBelow}`);
+    console.log(`AnimateIO.Animate() can't initialize since the screen width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
     return;
   } // Initiate animation observer
 
@@ -342,20 +348,20 @@ const AddNewElementsToStateMachine = () => {
 };
 
 const WatchBrowserResize = () => {
-  (0, _Helpers.QueryMedia)(`(min-width: ${_Settings.AnimationSettings.deactivateBelow}px)`, response => {
+  (0, _Helpers.QueryMedia)(_Settings.AnimationSettings.activeRange, response => {
     if (response.matches) {
       // Start animations if not already initialized
       if (!AnimationsInitialized) {
         if (response.remove != null) {
           response.remove();
-          console.log(`Restarting AnimateIO.Animate as browser width is >= ${_Settings.AnimationSettings.deactivateBelow}px`);
+          console.log(`Restarting AnimateIO.Animate as browser width is inside the acceptable range: ${_Settings.AnimationSettings.activeRange}px`);
           InitAnimations();
         }
       }
     } else {
       // stop the animations if browser window shrinks below defined width
       if (AnimationsInitialized) {
-        console.log(`Stopping AnimateIO.Animate as browser width is < ${_Settings.AnimationSettings.deactivateBelow}px`);
+        console.log(`Stopping AnimateIO.Animate as browser width is outside the range: ${_Settings.AnimationSettings.activeRange}`);
         KillAnimateInstance();
       }
     }
@@ -992,7 +998,7 @@ exports.OverrideDefaultObserverSettings = OverrideDefaultObserverSettings;
 const DefaultAnimationSettings = {
   mode: 'relative',
   fps: null,
-  deactivateBelow: 1025,
+  activeRange: '(min-width: 1025px)',
   trackMutations: true,
   mutationWatchDelay: 0,
   gridHelper: false
