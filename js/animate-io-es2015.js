@@ -1,3 +1,9 @@
+/**
+ * https://github.com/rohangaikwad/animate-io
+ * Author: Rohan gaikwad
+ * Generated on Monday, September 28th 2020, 2:47:15 am
+ */
+
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
