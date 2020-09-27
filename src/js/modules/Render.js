@@ -46,20 +46,20 @@ export const RenderLoop = () => {
     document.body.setAttribute("data-scroll-top", scrollTop);
     forceRender = false;
 
-    let entries = StateMachine.elements.filter(entry => entry.ratio > 0);
+    let visibleSMObjects = StateMachine.elements.filter(entry => entry.ratio > 0);
 
-    entries.forEach(entry => {
-        let frames = entry.keyframes;
-        let elem = entry.domElement;
-        let elemTop = elem.offsetTop;
+    visibleSMObjects.forEach(smObject => {
+        let frames = smObject.keyframes;
+        let domElement = smObject.domElement;
+        let elemTop = domElement.offsetTop;
 
         //convert offset to absolute
-        if (AnimationSettings.mode == "relative") {
+        if (smObject.mode == "relative") {
             frames.forEach((f, i) => {
                 let offset = elemTop + f.offset;
                 //offset -= window.innerHeight;
                 f.absOffset = offset;
-                elem.setAttribute(`data-kf-${i}`, offset);
+                domElement.setAttribute(`data-kf-${i}`, offset);
             })
         }
 
@@ -80,7 +80,7 @@ export const RenderLoop = () => {
                 Object.keys(requiredFrame.props).forEach((key, index) => {
                     let prop = requiredFrame.props[key];
                     let value = _interpolateString(prop.value);
-                    setStyle(elem, key, value);
+                    setStyle(domElement, key, value);
                 })
                 return;
             }
@@ -90,7 +90,7 @@ export const RenderLoop = () => {
             Object.keys(curFrame.props).forEach(key => {
                 let interpolatedValue = _calcInterpolation(curFrame.props[key].value, nxtFrame.props[key].value, progress);
                 let value = _interpolateString(interpolatedValue);
-                setStyle(elem, key, value);
+                setStyle(domElement, key, value);
             })
         }
     });

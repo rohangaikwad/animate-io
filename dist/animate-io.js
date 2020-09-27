@@ -216,10 +216,19 @@ const populateStateMachine = done => {
     elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
     let entry = { ...SMOTemplate
     };
+    let mode = _Settings.AnimationSettings.mode;
+
+    if (elem.hasAttribute('data-aio-mode')) {
+      let _mode = elem.getAttribute('data-aio-mode');
+
+      if (_mode.length > 0) mode = _mode;
+    }
+
     entry.id = id;
+    entry.mode = mode;
     entry.repeat = elem.hasAttribute('data-aio-repeat');
     entry.domElement = elem;
-    entry.keyframes = processKeyFrames(keyframes, elem);
+    entry.keyframes = processKeyFrames(keyframes, elem, mode);
     entry.observerAttached = false;
 
     if (keyframes.length == 1) {
@@ -232,7 +241,7 @@ const populateStateMachine = done => {
   done(_elements.length);
 };
 
-const processKeyFrames = (kf, elem) => {
+const processKeyFrames = (kf, elem, elem_mode) => {
   let frames = [];
   kf.forEach((f, i) => {
     let _props = {};
@@ -264,7 +273,7 @@ const processKeyFrames = (kf, elem) => {
     elem.setAttribute(`data-kf-${i}`, _offset);
   }); //convert offset to absolute
 
-  if (_Settings.AnimationSettings.mode == "relative") {
+  if (elem_mode == "relative") {
     frames.forEach((f, i) => {
       let offset = elem.offsetTop + f.offset - window.innerHeight;
       f.absOffset = offset;
@@ -876,19 +885,19 @@ const RenderLoop = () => {
   document.body.setAttribute("data-scroll-top", scrollTop);
   forceRender = false;
 
-  let entries = _AnimationStateMachine.StateMachine.elements.filter(entry => entry.ratio > 0);
+  let visibleSMObjects = _AnimationStateMachine.StateMachine.elements.filter(entry => entry.ratio > 0);
 
-  entries.forEach(entry => {
-    let frames = entry.keyframes;
-    let elem = entry.domElement;
-    let elemTop = elem.offsetTop; //convert offset to absolute
+  visibleSMObjects.forEach(smObject => {
+    let frames = smObject.keyframes;
+    let domElement = smObject.domElement;
+    let elemTop = domElement.offsetTop; //convert offset to absolute
 
-    if (_Settings.AnimationSettings.mode == "relative") {
+    if (smObject.mode == "relative") {
       frames.forEach((f, i) => {
         let offset = elemTop + f.offset; //offset -= window.innerHeight;
 
         f.absOffset = offset;
-        elem.setAttribute(`data-kf-${i}`, offset);
+        domElement.setAttribute(`data-kf-${i}`, offset);
       });
     }
 
@@ -908,7 +917,7 @@ const RenderLoop = () => {
 
           let value = _interpolateString(prop.value);
 
-          setStyle(elem, key, value);
+          setStyle(domElement, key, value);
         });
         return;
       }
@@ -919,7 +928,7 @@ const RenderLoop = () => {
 
         let value = _interpolateString(interpolatedValue);
 
-        setStyle(elem, key, value);
+        setStyle(domElement, key, value);
       });
     }
   });

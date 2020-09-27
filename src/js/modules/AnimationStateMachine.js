@@ -59,11 +59,20 @@ const populateStateMachine = (done) => {
         elem.setAttribute(SMO_ID_ATTR_NAME, id);
 
         let entry = { ...SMOTemplate };
+
+        let mode = AnimationSettings.mode;
+        if (elem.hasAttribute('data-aio-mode')) {
+            let _mode = elem.getAttribute('data-aio-mode');
+            if (_mode.length > 0) mode = _mode;
+        }
+
         entry.id = id;
+        entry.mode = mode;
         entry.repeat = elem.hasAttribute('data-aio-repeat');
         entry.domElement = elem;
-        entry.keyframes = processKeyFrames(keyframes, elem);
+        entry.keyframes = processKeyFrames(keyframes, elem, mode);
         entry.observerAttached = false;
+
 
         if (keyframes.length == 1) {
             StateMachine.singleFrameElements.push(entry);
@@ -71,12 +80,12 @@ const populateStateMachine = (done) => {
             StateMachine.elements.push(entry);
         }
     });
-    
+
     done(_elements.length);
 }
 
 
-const processKeyFrames = (kf, elem) => {
+const processKeyFrames = (kf, elem, elem_mode) => {
     let frames = [];
     kf.forEach((f, i) => {
         let _props = {}
@@ -113,7 +122,7 @@ const processKeyFrames = (kf, elem) => {
     });
 
     //convert offset to absolute
-    if (AnimationSettings.mode == "relative") {
+    if (elem_mode == "relative") {
         frames.forEach((f, i) => {
             let offset = elem.offsetTop + f.offset - window.innerHeight;
             f.absOffset = offset;
