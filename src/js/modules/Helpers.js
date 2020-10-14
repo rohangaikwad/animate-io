@@ -20,10 +20,13 @@ export const DrawGrid = () => {
     gridContainer.id = "aio-grid-container";
 
     let h = document.documentElement.scrollHeight;
-    for (let i = 0; i < h; i += 100) {
+    let wh = window.innerHeight;
+    let distance = wh/20;
+    for (let i = 0; i < h; i += distance) {
         let div = document.createElement('div');
         div.className = "aio-row";
-        div.innerHTML = `<div class="num">${i}</div><div class="num">${i}</div>`;
+        div.style.marginBottom = `${distance}px`;
+        div.innerHTML = `<div class="num">${(i/wh*100).toFixed(2)} vh</div><div class="num">${i.toFixed(2)} px</div>`;
         gridContainer.appendChild(div);
     }
 

@@ -2,7 +2,7 @@ import { StateMachine } from './AnimationStateMachine'
 import { AnimationSettings } from './Settings';
 
 
-let scrollTop = 0;
+let scrollTop = 0, scrollTopVH = 0;
 let scrollTopPrev = -1;
 let doc = document.documentElement;
 let raf_id = 0; // Request Animate Frame ID
@@ -43,15 +43,23 @@ export const RenderLoop = () => {
     // Exception: Continue with the render loop if forceRender flag is true
     if (scrollTop == scrollTopPrev && !forceRender) return;
     scrollTopPrev = scrollTop;
-    document.body.setAttribute("data-scroll-top", scrollTop);
+
+    //document.body.setAttribute("data-scroll-top-px", scrollTop);
     forceRender = false;
 
     let visibleSMObjects = StateMachine.elements.filter(entry => entry.ratio > 0);
 
     visibleSMObjects.forEach(smObject => {
         let frames = smObject.keyframes;
-        let domElement = smObject.domElement;
+        let { unitType, domElement } = smObject;
         let elemTop = domElement.offsetTop;
+
+        // if(unitType == 'vh') {
+        //     scrollTop = scrollTopVH;
+        // }
+
+        let transformedScrollTop = TransformUnitLength(scrollTop, unitType);
+        document.body.setAttribute(`data-scroll-top-${unitType}`, scrollTop);
 
         //convert offset to absolute
         if (smObject.mode == "relative") {
@@ -70,8 +78,8 @@ export const RenderLoop = () => {
             let frame1_top = curFrame.absOffset;
             let frame2_top = nxtFrame.absOffset;
 
-            let isBefore = scrollTop < frame1_top;
-            let isAfter = scrollTop > frame2_top;
+            let isBefore = transformedScrollTop < frame1_top;
+            let isAfter = transformedScrollTop > frame2_top;
 
             if (isBefore || isAfter) {
                 //console.log(isBefore, isAfter);
@@ -85,7 +93,7 @@ export const RenderLoop = () => {
                 return;
             }
 
-            let progress = (scrollTop - frame1_top) / (frame2_top - frame1_top);
+            let progress = (transformedScrollTop - frame1_top) / (frame2_top - frame1_top);
 
             Object.keys(curFrame.props).forEach(key => {
                 let interpolatedValue = _calcInterpolation(curFrame.props[key].value, nxtFrame.props[key].value, progress);
@@ -138,6 +146,23 @@ let setStyle = (elem, key, value) => {
     } else {
         style[key] = value;     
     }
+}
+
+const TransformUnitLength = (val, unit) => {
+    let v = val;
+    let h = window.innerHeight;
+    let w = window.innerWidth;
+
+    let min = (w > h) ? h : w;
+    let max = (w < h) ? h : w;
+
+    // relative
+    if(unit == 'vh')   v = (val / h)   * 100;
+    if(unit == 'vw')   v = (val / w)   * 100;
+    if(unit == 'vmin') v = (val / min) * 100;
+    if(unit == 'vmax') v = (val / max) * 100;
+
+    return parseFloat(v).toFixed(2);
 }
 
 

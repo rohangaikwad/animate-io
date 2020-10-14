@@ -54,34 +54,75 @@ const populateStateMachine = (done) => {
         let { attributes } = elem;
 
         let keyframes = Array.from(attributes).filter(attr => (/^data-aio--?[0-9]+/g).test(attr.name));
-
-        let id = `aio-pl-${++populateCounter}-${i}`;
-        elem.setAttribute(SMO_ID_ATTR_NAME, id);
-
-        let entry = { ...SMOTemplate };
-
-        let mode = AnimationSettings.mode;
-        if (elem.hasAttribute('data-aio-mode')) {
-            let _mode = elem.getAttribute('data-aio-mode');
-            if (_mode.length > 0) mode = _mode;
-        }
-
-        entry.id = id;
-        entry.mode = mode;
-        entry.repeat = elem.hasAttribute('data-aio-repeat');
-        entry.domElement = elem;
-        entry.keyframes = processKeyFrames(keyframes, elem, mode);
-        entry.observerAttached = false;
-
-
-        if (keyframes.length == 1) {
-            StateMachine.singleFrameElements.push(entry);
+        let unitType = extractUnitType(keyframes);
+        if (unitType == null) {
+            console.error(`Error: Multiple unit types defined in keyframes. Please define a single unit type on all keyframes for expected bahaviour.`);
+            console.error(elem);
         } else {
-            StateMachine.elements.push(entry);
+
+            StripUnitsFromKeyframes(keyframes);
+
+            let id = `aio-pl-${++populateCounter}-${i}`;
+            elem.setAttribute(SMO_ID_ATTR_NAME, id);
+
+            let entry = { ...SMOTemplate };
+
+            let mode = AnimationSettings.mode;
+            if (elem.hasAttribute('data-aio-mode')) {
+                let _mode = elem.getAttribute('data-aio-mode');
+                if (_mode.length > 0) mode = _mode;
+            }
+
+            entry.id = id;
+            entry.mode = mode;
+            entry.repeat = elem.hasAttribute('data-aio-repeat');
+            entry.domElement = elem;
+            entry.unitType = unitType;
+            entry.keyframes = processKeyFrames(keyframes, elem, mode);
+            entry.observerAttached = false;
+
+
+            if (keyframes.length == 1) {
+                StateMachine.singleFrameElements.push(entry);
+            } else {
+                StateMachine.elements.push(entry);
+            }
         }
+
     });
 
     done(_elements.length);
+}
+
+const extractUnitType = (_keyframes) => {
+    let unitType = '';
+    let keyframes = [..._keyframes];
+
+    keyframes.forEach(kf => {
+        if (unitType == null) return;
+
+        let result = kf.name.replace(/data-aio--?(\d+)/gi, "");
+        result = (result == '') ? 'px' : result; // set px if result is blank
+
+        if (unitType == '') {
+            unitType = result;
+        } else {
+            if (unitType != result) {
+                // if we find different unit for other keyframe, return null
+                unitType = null;
+            }
+        }
+    });
+
+    return unitType;
+}
+
+
+const StripUnitsFromKeyframes = (keyframes) => {
+    keyframes.map((kf, i) => {
+        //let stripped = kf.match(/data-aio--?(\d+)/gi);
+        //return stripped[0];
+    })
 }
 
 
@@ -89,7 +130,7 @@ const processKeyFrames = (kf, elem, elem_mode) => {
     let frames = [];
     kf.forEach((f, i) => {
         let _props = {}
-
+        debugger;
         f.value.trim().split(";").forEach(p => {
             if (p.length > 0) {
                 let key = p.split(":")[0].trim();

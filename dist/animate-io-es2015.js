@@ -1,7 +1,7 @@
 /**
  * https://github.com/rohangaikwad/animate-io
  * Author: Rohan gaikwad
- * Generated on Monday, September 28th 2020, 2:47:15 am
+ * Generated on Wednesday, October 14th 2020, 12:07:16 pm
  */
 
 "use strict";
@@ -153,7 +153,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       if (_Settings.AnimationSettings.gridHelper) {
         setTimeout(function () {
           return (0, _Helpers.DrawGrid)();
-        }, 1000);
+        }, 100);
       }
 
       AnimationsInitialized = true; // Check for browser resolution changes    
@@ -297,40 +297,78 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         var keyframes = Array.from(attributes).filter(function (attr) {
           return /^data-aio--?[0-9]+/g.test(attr.name);
         });
-        var id = "aio-pl-".concat(++populateCounter, "-").concat(i);
-        elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
+        var unitType = extractUnitType(keyframes);
 
-        var entry = _objectSpread({}, SMOTemplate);
-
-        var mode = _Settings.AnimationSettings.mode;
-
-        if (elem.hasAttribute('data-aio-mode')) {
-          var _mode = elem.getAttribute('data-aio-mode');
-
-          if (_mode.length > 0) mode = _mode;
-        }
-
-        entry.id = id;
-        entry.mode = mode;
-        entry.repeat = elem.hasAttribute('data-aio-repeat');
-        entry.domElement = elem;
-        entry.keyframes = processKeyFrames(keyframes, elem, mode);
-        entry.observerAttached = false;
-
-        if (keyframes.length == 1) {
-          StateMachine.singleFrameElements.push(entry);
+        if (unitType == null) {
+          console.error("Error: Multiple unit types defined in keyframes. Please define a single unit type on all keyframes for expected bahaviour.");
+          console.error(elem);
         } else {
-          StateMachine.elements.push(entry);
+          StripUnitsFromKeyframes(keyframes);
+          var id = "aio-pl-".concat(++populateCounter, "-").concat(i);
+          elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
+
+          var entry = _objectSpread({}, SMOTemplate);
+
+          var mode = _Settings.AnimationSettings.mode;
+
+          if (elem.hasAttribute('data-aio-mode')) {
+            var _mode = elem.getAttribute('data-aio-mode');
+
+            if (_mode.length > 0) mode = _mode;
+          }
+
+          entry.id = id;
+          entry.mode = mode;
+          entry.repeat = elem.hasAttribute('data-aio-repeat');
+          entry.domElement = elem;
+          entry.unitType = unitType;
+          entry.keyframes = processKeyFrames(keyframes, elem, mode);
+          entry.observerAttached = false;
+
+          if (keyframes.length == 1) {
+            StateMachine.singleFrameElements.push(entry);
+          } else {
+            StateMachine.elements.push(entry);
+          }
         }
       });
 
       done(_elements.length);
     };
 
+    var extractUnitType = function extractUnitType(_keyframes) {
+      var unitType = '';
+
+      var keyframes = _toConsumableArray(_keyframes);
+
+      keyframes.forEach(function (kf) {
+        if (unitType == null) return;
+        var result = kf.name.replace(/data-aio--?(\d+)/gi, "");
+        result = result == '' ? 'px' : result; // set px if result is blank
+
+        if (unitType == '') {
+          unitType = result;
+        } else {
+          if (unitType != result) {
+            // if we find different unit for other keyframe, return null
+            unitType = null;
+          }
+        }
+      });
+      return unitType;
+    };
+
+    var StripUnitsFromKeyframes = function StripUnitsFromKeyframes(keyframes) {
+      keyframes.map(function (kf, i) {//let stripped = kf.match(/data-aio--?(\d+)/gi);
+        //return stripped[0];
+      });
+    };
+
     var processKeyFrames = function processKeyFrames(kf, elem, elem_mode) {
       var frames = [];
       kf.forEach(function (f, i) {
         var _props = {};
+        debugger;
         f.value.trim().split(";").forEach(function (p) {
           if (p.length > 0) {
             var key = p.split(":")[0].trim();
@@ -536,11 +574,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       var gridContainer = document.createElement('div');
       gridContainer.id = "aio-grid-container";
       var h = document.documentElement.scrollHeight;
+      var wh = window.innerHeight;
+      var distance = wh / 20;
 
-      for (var i = 0; i < h; i += 100) {
+      for (var i = 0; i < h; i += distance) {
         var div = document.createElement('div');
         div.className = "aio-row";
-        div.innerHTML = "<div class=\"num\">".concat(i, "</div><div class=\"num\">").concat(i, "</div>");
+        div.style.marginBottom = "".concat(distance, "px");
+        div.innerHTML = "<div class=\"num\">".concat((i / wh * 100).toFixed(2), " vh</div><div class=\"num\">").concat(i.toFixed(2), " px</div>");
         gridContainer.appendChild(div);
       }
 
@@ -962,7 +1003,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
     var _Settings = require("./Settings");
 
-    var scrollTop = 0;
+    var scrollTop = 0,
+        scrollTopVH = 0;
     var scrollTopPrev = -1;
     var doc = document.documentElement;
     var raf_id = 0; // Request Animate Frame ID
@@ -1000,8 +1042,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       // Exception: Continue with the render loop if forceRender flag is true
 
       if (scrollTop == scrollTopPrev && !forceRender) return;
-      scrollTopPrev = scrollTop;
-      document.body.setAttribute("data-scroll-top", scrollTop);
+      scrollTopPrev = scrollTop; //document.body.setAttribute("data-scroll-top-px", scrollTop);
+
       forceRender = false;
 
       var visibleSMObjects = _AnimationStateMachine.StateMachine.elements.filter(function (entry) {
@@ -1010,8 +1052,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
       visibleSMObjects.forEach(function (smObject) {
         var frames = smObject.keyframes;
-        var domElement = smObject.domElement;
-        var elemTop = domElement.offsetTop; //convert offset to absolute
+        var unitType = smObject.unitType,
+            domElement = smObject.domElement;
+        var elemTop = domElement.offsetTop; // if(unitType == 'vh') {
+        //     scrollTop = scrollTopVH;
+        // }
+
+        var transformedScrollTop = TransformUnitLength(scrollTop, unitType);
+        document.body.setAttribute("data-scroll-top-".concat(unitType), scrollTop); //convert offset to absolute
 
         if (smObject.mode == "relative") {
           frames.forEach(function (f, i) {
@@ -1027,8 +1075,8 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           var nxtFrame = frames[i + 1];
           var frame1_top = curFrame.absOffset;
           var frame2_top = nxtFrame.absOffset;
-          var isBefore = scrollTop < frame1_top;
-          var isAfter = scrollTop > frame2_top;
+          var isBefore = transformedScrollTop < frame1_top;
+          var isAfter = transformedScrollTop > frame2_top;
 
           if (isBefore || isAfter) {
             //console.log(isBefore, isAfter);
@@ -1045,7 +1093,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
             };
           }
 
-          var progress = (scrollTop - frame1_top) / (frame2_top - frame1_top);
+          var progress = (transformedScrollTop - frame1_top) / (frame2_top - frame1_top);
           Object.keys(curFrame.props).forEach(function (key) {
             var interpolatedValue = _calcInterpolation(curFrame.props[key].value, nxtFrame.props[key].value, progress);
 
@@ -1105,6 +1153,20 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
       } else {
         style[key] = value;
       }
+    };
+
+    var TransformUnitLength = function TransformUnitLength(val, unit) {
+      var v = val;
+      var h = window.innerHeight;
+      var w = window.innerWidth;
+      var min = w > h ? h : w;
+      var max = w < h ? h : w; // relative
+
+      if (unit == 'vh') v = val / h * 100;
+      if (unit == 'vw') v = val / w * 100;
+      if (unit == 'vmin') v = val / min * 100;
+      if (unit == 'vmax') v = val / max * 100;
+      return parseFloat(v).toFixed(2);
     };
 
     var StopRenderLoop = function StopRenderLoop() {

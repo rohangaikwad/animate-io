@@ -37,7 +37,7 @@ export const InitAnimations = () => {
 
     // show a helper grid and markers for where an animation will start and end
     if (AnimationSettings.gridHelper) {
-        setTimeout(() => DrawGrid(), 1000);
+        setTimeout(() => DrawGrid(), 100);
     }
 
     AnimationsInitialized = true;

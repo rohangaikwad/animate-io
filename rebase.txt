@@ -1,0 +1,15 @@
+git checkout 993a5978878fb68ae61727a6c57d7ef90180840d
+
+git commit --amend --author="rohangaikwad <gaikwadvrohan@gmail.com>" --no-edit
+
+git rebase -i 993a5978878fb68ae61727a6c57d7ef90180840d
+
+
+
+git replace 03f482d6 42627abe
+
+git filter-branch -- --all
+
+git replace -d 03f482d6
+
+git push --force-with-lease

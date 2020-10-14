@@ -1,7 +1,7 @@
 /**
  * https://github.com/rohangaikwad/animate-io
  * Author: Rohan gaikwad
- * Generated on Monday, September 28th 2020, 2:47:15 am
+ * Generated on Wednesday, October 14th 2020, 12:07:16 pm
  */
 
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -90,7 +90,7 @@ const InitAnimations = () => {
 
 
   if (_Settings.AnimationSettings.gridHelper) {
-    setTimeout(() => (0, _Helpers.DrawGrid)(), 1000);
+    setTimeout(() => (0, _Helpers.DrawGrid)(), 100);
   }
 
   AnimationsInitialized = true; // Check for browser resolution changes    
@@ -218,39 +218,75 @@ const populateStateMachine = done => {
       attributes
     } = elem;
     let keyframes = Array.from(attributes).filter(attr => /^data-aio--?[0-9]+/g.test(attr.name));
-    let id = `aio-pl-${++populateCounter}-${i}`;
-    elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
-    let entry = { ...SMOTemplate
-    };
-    let mode = _Settings.AnimationSettings.mode;
+    let unitType = extractUnitType(keyframes);
 
-    if (elem.hasAttribute('data-aio-mode')) {
-      let _mode = elem.getAttribute('data-aio-mode');
-
-      if (_mode.length > 0) mode = _mode;
-    }
-
-    entry.id = id;
-    entry.mode = mode;
-    entry.repeat = elem.hasAttribute('data-aio-repeat');
-    entry.domElement = elem;
-    entry.keyframes = processKeyFrames(keyframes, elem, mode);
-    entry.observerAttached = false;
-
-    if (keyframes.length == 1) {
-      StateMachine.singleFrameElements.push(entry);
+    if (unitType == null) {
+      console.error(`Error: Multiple unit types defined in keyframes. Please define a single unit type on all keyframes for expected bahaviour.`);
+      console.error(elem);
     } else {
-      StateMachine.elements.push(entry);
+      StripUnitsFromKeyframes(keyframes);
+      let id = `aio-pl-${++populateCounter}-${i}`;
+      elem.setAttribute(_Constants.SMO_ID_ATTR_NAME, id);
+      let entry = { ...SMOTemplate
+      };
+      let mode = _Settings.AnimationSettings.mode;
+
+      if (elem.hasAttribute('data-aio-mode')) {
+        let _mode = elem.getAttribute('data-aio-mode');
+
+        if (_mode.length > 0) mode = _mode;
+      }
+
+      entry.id = id;
+      entry.mode = mode;
+      entry.repeat = elem.hasAttribute('data-aio-repeat');
+      entry.domElement = elem;
+      entry.unitType = unitType;
+      entry.keyframes = processKeyFrames(keyframes, elem, mode);
+      entry.observerAttached = false;
+
+      if (keyframes.length == 1) {
+        StateMachine.singleFrameElements.push(entry);
+      } else {
+        StateMachine.elements.push(entry);
+      }
     }
   });
 
   done(_elements.length);
 };
 
+const extractUnitType = _keyframes => {
+  let unitType = '';
+  let keyframes = [..._keyframes];
+  keyframes.forEach(kf => {
+    if (unitType == null) return;
+    let result = kf.name.replace(/data-aio--?(\d+)/gi, "");
+    result = result == '' ? 'px' : result; // set px if result is blank
+
+    if (unitType == '') {
+      unitType = result;
+    } else {
+      if (unitType != result) {
+        // if we find different unit for other keyframe, return null
+        unitType = null;
+      }
+    }
+  });
+  return unitType;
+};
+
+const StripUnitsFromKeyframes = keyframes => {
+  keyframes.map((kf, i) => {//let stripped = kf.match(/data-aio--?(\d+)/gi);
+    //return stripped[0];
+  });
+};
+
 const processKeyFrames = (kf, elem, elem_mode) => {
   let frames = [];
   kf.forEach((f, i) => {
     let _props = {};
+    debugger;
     f.value.trim().split(";").forEach(p => {
       if (p.length > 0) {
         let key = p.split(":")[0].trim();
@@ -444,11 +480,14 @@ const DrawGrid = () => {
   let gridContainer = document.createElement('div');
   gridContainer.id = "aio-grid-container";
   let h = document.documentElement.scrollHeight;
+  let wh = window.innerHeight;
+  let distance = wh / 20;
 
-  for (let i = 0; i < h; i += 100) {
+  for (let i = 0; i < h; i += distance) {
     let div = document.createElement('div');
     div.className = "aio-row";
-    div.innerHTML = `<div class="num">${i}</div><div class="num">${i}</div>`;
+    div.style.marginBottom = `${distance}px`;
+    div.innerHTML = `<div class="num">${(i / wh * 100).toFixed(2)} vh</div><div class="num">${i.toFixed(2)} px</div>`;
     gridContainer.appendChild(div);
   }
 
@@ -847,7 +886,8 @@ var _AnimationStateMachine = require("./AnimationStateMachine");
 
 var _Settings = require("./Settings");
 
-let scrollTop = 0;
+let scrollTop = 0,
+    scrollTopVH = 0;
 let scrollTopPrev = -1;
 let doc = document.documentElement;
 let raf_id = 0; // Request Animate Frame ID
@@ -887,16 +927,24 @@ const RenderLoop = () => {
   // Exception: Continue with the render loop if forceRender flag is true
 
   if (scrollTop == scrollTopPrev && !forceRender) return;
-  scrollTopPrev = scrollTop;
-  document.body.setAttribute("data-scroll-top", scrollTop);
+  scrollTopPrev = scrollTop; //document.body.setAttribute("data-scroll-top-px", scrollTop);
+
   forceRender = false;
 
   let visibleSMObjects = _AnimationStateMachine.StateMachine.elements.filter(entry => entry.ratio > 0);
 
   visibleSMObjects.forEach(smObject => {
     let frames = smObject.keyframes;
-    let domElement = smObject.domElement;
-    let elemTop = domElement.offsetTop; //convert offset to absolute
+    let {
+      unitType,
+      domElement
+    } = smObject;
+    let elemTop = domElement.offsetTop; // if(unitType == 'vh') {
+    //     scrollTop = scrollTopVH;
+    // }
+
+    let transformedScrollTop = TransformUnitLength(scrollTop, unitType);
+    document.body.setAttribute(`data-scroll-top-${unitType}`, scrollTop); //convert offset to absolute
 
     if (smObject.mode == "relative") {
       frames.forEach((f, i) => {
@@ -912,8 +960,8 @@ const RenderLoop = () => {
       let nxtFrame = frames[i + 1];
       let frame1_top = curFrame.absOffset;
       let frame2_top = nxtFrame.absOffset;
-      let isBefore = scrollTop < frame1_top;
-      let isAfter = scrollTop > frame2_top;
+      let isBefore = transformedScrollTop < frame1_top;
+      let isAfter = transformedScrollTop > frame2_top;
 
       if (isBefore || isAfter) {
         //console.log(isBefore, isAfter);
@@ -928,7 +976,7 @@ const RenderLoop = () => {
         return;
       }
 
-      let progress = (scrollTop - frame1_top) / (frame2_top - frame1_top);
+      let progress = (transformedScrollTop - frame1_top) / (frame2_top - frame1_top);
       Object.keys(curFrame.props).forEach(key => {
         let interpolatedValue = _calcInterpolation(curFrame.props[key].value, nxtFrame.props[key].value, progress);
 
@@ -982,6 +1030,20 @@ let setStyle = (elem, key, value) => {
   } else {
     style[key] = value;
   }
+};
+
+const TransformUnitLength = (val, unit) => {
+  let v = val;
+  let h = window.innerHeight;
+  let w = window.innerWidth;
+  let min = w > h ? h : w;
+  let max = w < h ? h : w; // relative
+
+  if (unit == 'vh') v = val / h * 100;
+  if (unit == 'vw') v = val / w * 100;
+  if (unit == 'vmin') v = val / min * 100;
+  if (unit == 'vmax') v = val / max * 100;
+  return parseFloat(v).toFixed(2);
 };
 
 const StopRenderLoop = () => {
