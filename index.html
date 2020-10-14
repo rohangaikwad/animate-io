@@ -25,16 +25,16 @@
     </aside> -->
 
     <div class="container">
-        <section class="logo" data-aiobserve data-aio-delay="1250" data-aio-enter-class="min">
-            <div class="bg-wrapper" data-aio-500="background-color:rgb(19, 22, 41);" data-aio-750="background-color:rgb(220,220,220);">
+        <section class="logo" data-aiobserve data-aio-ref="section.intro" data-aio-repeat>
+            <div class="bg-wrapper" data-aio-15vh="background-color:rgb(19, 22, 41);" data-aio-25vh="background-color:rgb(220,220,220);">
                 <div class="logo-text" data-aiobserve data-aio-delay="250" data-aio-enter-class="show">
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">A</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">n</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">i</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">m</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">a</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">t</div>
-                    <div data-aio-500="color: rgb(220,220,220)" data-aio-900="color: rgb(0,0,0)" data-aio-mode="absolute" class="char">e</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">A</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">n</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">i</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">m</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">a</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">t</div>
+                    <div data-aio-15vh="color: rgb(220,220,220)" data-aio-25vh="color: rgb(0,0,0)" class="char">e</div>
                     <div class="char io">I</div>
                     <div class="char io">O</div>
                 </div>
@@ -42,12 +42,12 @@
                 <div class="sep" data-aiobserve data-aio-delay="1250"></div>
 
                 <div class="get-code" data-aiobserve data-aio-delay="1250">
-                    <ul class="tabs">
+                    <ul class="tabs" data-aio-80vh="opacity:1" data-aio-105vh="opacity:0" data-aio-repeat>
                         <li class="active">CDN</li>
                         <li>CDN Legacy Browsers</li>
                         <!-- <li>Download</li> -->
                     </ul>
-                    <ul class="tabs-content">
+                    <ul class="tabs-content" data-aio-80vh="opacity:1" data-aio-105vh="opacity:0" data-aio-repeat>
                         <li class="code active">
                             <pre class="code-block">
     <span class="arrow">&lt;</span><span class="tag">script</span><span> </span><span class="attr">src</span><span class="arrow">=</span><span class="value">"https://cdn.jsdelivr.net/gh/rohangaikwad/animate-io/dist/animate-io.min.js"</span><span class="arrow">&gt;&lt;/</span><span class="tag">script</span><span class="arrow">&gt;</span>
@@ -66,11 +66,14 @@
                             </pre>
                         </li>
                         <li class="downloads">
-
                         </li>
                     </ul>
                 </div>
             </div>
+        </section>
+
+        <section class="intro">
+            Rohan
         </section>
 
         <!-- <section class="animate ref" data-aiobserve data-aio-enter-class="active" data-aio-repeat>
@@ -100,7 +103,7 @@
         // });
 
         let mediaQuery = `(min-width: 0px)`;
-        AnimateIO.Animate({ gridHelper: true, activeRange: mediaQuery, fps: 120 });
+        AnimateIO.Animate({ gridHelper: true, activeRange: mediaQuery, fps: 120, mode: 'absolute' });
 
         let style = document.querySelector('#style');
         setInterval(() => updateStyle(), 2000);
